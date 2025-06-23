@@ -22,7 +22,7 @@ export async function createProject(req: NextRequest , res: NextResponse) {
     const response = await execPromise('npm create vite@latest sandbox -- --template react-ts --yes',{
         cwd: projectPath,
     })
-    // Step 3: Return response
+
     return NextResponse.json({
       message: 'Project directory created successfully',
       projectId,
