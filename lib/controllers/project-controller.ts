@@ -19,7 +19,7 @@ export async function createProject(req: NextRequest , res: NextResponse) {
     await fs.mkdir(projectPath, { recursive: true });
 
 
-    const response = await execPromise('npm create vite@latest sandbox -- --template react-ts --yes',{
+    const response = await execPromise(process.env.REACT_PROJECT_COMMAND! ,{
         cwd: projectPath,
     })
 

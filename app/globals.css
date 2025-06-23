@@ -69,14 +69,15 @@
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0.002 247.839);
+  --sidebar: #1A1919;
   --sidebar-foreground: oklch(0.13 0.028 261.692);
   --sidebar-primary: oklch(0.21 0.034 264.665);
   --sidebar-primary-foreground: oklch(0.985 0.002 247.839);
   --sidebar-accent: oklch(0.967 0.003 264.542);
   --sidebar-accent-foreground: oklch(0.21 0.034 264.665);
-  --sidebar-border: oklch(0.928 0.006 264.531);
+  --sidebar-border: #1A1919;
   --sidebar-ring: oklch(0.707 0.022 261.325);
+  --projects-background:#050505;
 }
 
 .dark {
@@ -109,18 +110,20 @@
   --sidebar-primary-foreground: oklch(0.985 0.002 247.839);
   --sidebar-accent: oklch(0.278 0.033 256.848);
   --sidebar-accent-foreground: oklch(0.985 0.002 247.839);
-  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-border: oklch(98.463% 0.00181 249.248);
   --sidebar-ring: oklch(0.551 0.027 264.364);
 }
 
 @layer base {
+   
   * {
-    @apply border-border outline-ring/50;
+
   }
   body {
     @apply bg-background text-foreground;
   }
 }
+
 :root {
   --background: #151515;
   --foreground: #eaeaea; /* Optional: pick a readable text color */
@@ -129,4 +132,11 @@
 .dark {
   --background: #151515;
   --foreground: #eaeaea;
+}
+/* globals.css */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* Optional, disables page scroll */
 }
