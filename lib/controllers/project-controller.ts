@@ -1,5 +1,5 @@
 
-
+import uuid4 from 'uuid4';
 import { NextRequest, NextResponse } from 'next/server';
 import util from 'util';
 import child_process from 'child_process';
@@ -9,6 +9,33 @@ import fs from 'fs/promises';
 const execPromise = util.promisify(child_process.exec);
 
 export async function createProject(req: NextRequest , res: NextResponse) {
- //step1: create a unique id and then inside the projects folder create a new folder with that id
- 
+  try {
+
+    const projectId = uuid4();
+    console.log('new project id:', projectId);
+
+
+    const projectPath = path.join(process.cwd(), 'generated-projects', projectId);
+    await fs.mkdir(projectPath, { recursive: true });
+
+
+    const response = await execPromise('npm create vite@latest sandbox -- --template react-ts --yes',{
+        cwd: projectPath,
+    })
+    // Step 3: Return response
+    return NextResponse.json({
+      message: 'Project directory created successfully',
+      projectId,
+      path: projectPath,
+    }, { status: 201 });
+
+  } catch (error) {
+    const err = error as Error;
+    console.error('Error creating project folder:', err.message);
+    return NextResponse.json({
+      error: err.message || 'Failed to create project directory'
+    }, { status: 500 });
+  }
 }
+ 
+
