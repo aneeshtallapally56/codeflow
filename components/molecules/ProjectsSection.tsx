@@ -3,6 +3,7 @@ import React from 'react'
 import { Button } from '../ui/button'
 import { BadgePlus, Plus } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import CreateProjectTest from '../atoms/CreateProjectTest'
 export default function ProjectsSection() {
     const [open, setOpen] = React.useState(false);
   return (
@@ -14,7 +15,7 @@ export default function ProjectsSection() {
           <h1 className="text-2xl text-zinc-300 font-bold tracking-tight">
             My Projects
           </h1>
-
+    <CreateProjectTest />
           {/* Buttons */}
           <div className="flex gap-2">
             <Button

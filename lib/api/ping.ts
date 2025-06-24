@@ -2,7 +2,7 @@ import axiosInstance from '../config/axios-config';
 
 export const pingApi = async () => {
 try {
-      const res = await axiosInstance.get('api/v1/pingcheck');
+      const res = await axiosInstance.get('api/v1/ping');
       console.log(res.data);
       return res.data;
 } catch (error) {

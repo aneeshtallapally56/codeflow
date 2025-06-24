@@ -4,7 +4,7 @@ type CreateProjectPayload = {
 };
 export const createProject = async (payload: CreateProjectPayload) => {
 try {
-      const res = await axiosInstance.post('api/v1/projects');
+      const res = await axiosInstance.post('api/v1/projects/create-project');
       console.log(res.data);
       return res.data;
 } catch (error) {

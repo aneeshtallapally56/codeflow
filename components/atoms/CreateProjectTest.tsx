@@ -16,8 +16,8 @@ export default function CreateProjectTest() {
     }
   return (
     <div>
-      <h1>Create Project</h1>
-      <button onClick={handleCreateProject}>create</button>
+      <h1 className='text-white'>Create Project</h1>
+      <button className="text-white"onClick={handleCreateProject}>create</button>
         {isPending && <p>Creating project...</p>}
         {/* Add more UI elements as needed */}
     </div>
