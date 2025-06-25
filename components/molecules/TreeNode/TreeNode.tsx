@@ -2,15 +2,27 @@
 import { useState } from "react";
 import { IoIosArrowDown, IoIosArrowForward } from "react-icons/io";
 import { FileText, Folder as FolderIcon, FolderOpen } from 'lucide-react';
-
+import { useEditorSocketStore } from "@/lib/store/editorSocketStore";
+// onDoubleClick={()=>handleDoubleClick(fileFolderData)}
 export const TreeNode = ({ fileFolderData }: { fileFolderData: any }) => {
     const [visibility, setVisibility] = useState<{ [key: string]: boolean }>({});
+    const {editorSocket} = useEditorSocketStore();
 
     function toggleVisibility(nodeId: string) {
         setVisibility({
             ...visibility,
             [nodeId]: !visibility[nodeId]
         });
+    }
+    function handleDoubleClick(fileFolderData: any) {
+        console.log("🔍 editorSocket in TreeNode", editorSocket);
+
+    if (editorSocket?.connected) {
+      console.log("📤 Emitting readFile for:", fileFolderData.path);
+      editorSocket.emit('readFile', { pathToFileOrFolder: fileFolderData.path });
+    } else {
+      console.warn("⚠️ Socket not connected or not a file");
+    }
     }
 
     const isExpanded = visibility[fileFolderData.name];
@@ -56,7 +68,9 @@ export const TreeNode = ({ fileFolderData }: { fileFolderData: any }) => {
                         <span className="flex items-center justify-center w-4 h-4 mr-2 text-gray-400 group-hover:text-gray-300">
                             <FileText className="w-4 h-4" />
                         </span>
-                        <span className="truncate">{fileFolderData.name}</span>
+                        <span onClick={() => { handleDoubleClick(fileFolderData)
+        
+  }}  className="truncate">{fileFolderData.name}</span>
                     </div>
                 )}
             </div>
