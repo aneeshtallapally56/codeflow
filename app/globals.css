@@ -140,3 +140,6 @@ html, body {
   padding: 0;
   overflow: hidden; /* Optional, disables page scroll */
 }
+.tree-container * {
+  background-color: transparent !important;
+}
