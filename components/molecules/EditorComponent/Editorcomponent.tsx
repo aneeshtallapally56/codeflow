@@ -1,47 +1,65 @@
 'use client';
-import React, { useRef, useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import Editor from '@monaco-editor/react';
 import EditorButton from '@/components/atoms/EditorButton';
 import { useEditorSocketStore } from '@/lib/store/editorSocketStore';
 import { useActiveFileTabStore } from '@/lib/store/activeFileTabStore';
 
 export default function Editorcomponent() {
-  // Use useRef to persist timer across renders
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  
-  // Access Zustand state
-  const { editorSocket } = useEditorSocketStore();
+  const previousPathRef = useRef<string | null>(null);
+
+  const { editorSocket, joinFileRoom, leaveFileRoom } = useEditorSocketStore();
   const { activeFileTab } = useActiveFileTabStore();
-  
-  // Handle changes in the Monaco editor with debounced socket emission
-  function handleChange(value: string | undefined) {
-    // Clear existing timer
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
+
+  // Assuming projectId can be extracted from file path (e.g., `/generated-projects/<projectId>/src/file.js`)
+  const extractProjectId = (fullPath: string) => {
+    const segments = fullPath.split('/');
+    const index = segments.indexOf('generated-projects');
+    return index !== -1 && segments[index + 1] ? segments[index + 1] : '';
+  };
+
+  // Join/Leave file room based on file change
+  useEffect(() => {
+    const newPath = activeFileTab?.path;
+    const oldPath = previousPathRef.current;
+
+    if (editorSocket && newPath && newPath !== oldPath) {
+      const projectId = extractProjectId(newPath);
+      
+      if (oldPath) {
+        leaveFileRoom(projectId, oldPath);
+      }
+      joinFileRoom(projectId, newPath);
+      previousPathRef.current = newPath;
     }
-    
-    // Set new timer for debounced save
+  }, [activeFileTab?.path, editorSocket, joinFileRoom, leaveFileRoom]);
+
+  // Debounced file writing
+  function handleChange(value: string | undefined) {
+    if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
       const editorContent = value;
-      console.log("Sending writeFile event");
-      
-      editorSocket?.emit("writeFile", {
-        data: editorContent,
-        pathToFileOrFolder: activeFileTab?.path,
-      });
+      const filePath = activeFileTab?.path;
+      const projectId = filePath ? extractProjectId(filePath) : '';
+
+      if (filePath && projectId) {
+        editorSocket?.emit('writeFile', {
+          data: editorContent,
+          pathToFileOrFolder: filePath,
+          projectId,
+        });
+      }
     }, 2000);
   }
-  
+
   // Cleanup timer on unmount
   useEffect(() => {
     return () => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
+      if (timerRef.current) clearTimeout(timerRef.current);
     };
   }, []);
-  
-  // Get language based on file extension
+
   const getLanguage = (extension: string) => {
     const languageMap: Record<string, string> = {
       '.js': 'javascript',
@@ -62,7 +80,6 @@ export default function Editorcomponent() {
         <EditorButton />
         <EditorButton />
       </div>
-      
       <Editor
         height="70vh"
         width="100%"
@@ -75,7 +92,7 @@ export default function Editorcomponent() {
           fontFamily: 'Fira Code, monospace',
           minimap: { enabled: false },
           automaticLayout: true,
-          readOnly: !activeFileTab, // Make readonly if no file is active
+          readOnly: !activeFileTab,
         }}
       />
     </>
