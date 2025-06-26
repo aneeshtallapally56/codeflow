@@ -7,6 +7,7 @@ import { useEditorSocketStore } from "@/lib/store/editorSocketStore";
 import { useTreeStructureStore } from "@/lib/store/treeStructureStore";
 import { useParams } from "next/navigation";
 import { useSocketListeners } from "@/lib/utils/useSocketlisteners";
+import { InputModal } from "@/components/molecules/InputModal/InputModal";
 
 export default function Page() {
   const rawProjectId = useParams().id;
@@ -63,6 +64,7 @@ export default function Page() {
       <div className="h-full w-full">
         <TopBar />
         <Editorcomponent />
+
       </div>
     </div>
   );

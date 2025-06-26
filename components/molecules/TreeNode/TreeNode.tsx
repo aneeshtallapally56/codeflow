@@ -2,65 +2,79 @@
 import { useState } from "react";
 import { IoIosArrowDown, IoIosArrowForward } from "react-icons/io";
 import { FileText, Folder as FolderIcon, FolderOpen } from "lucide-react";
-import { useEditorSocketStore } from "@/lib/store/editorSocketStore";
 import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
+import {
+  Dialog,
+  DialogContent,
+} from "@/components/ui/dialog";
+import { useEditorSocketStore } from "@/lib/store/editorSocketStore";
 import { useTreeStructureStore } from "@/lib/store/treeStructureStore";
+import { InputModalBody } from "@/components/molecules/InputModal/InputModalBody"; // extract modal body into a separate component
 
 export const TreeNode = ({ fileFolderData }: { fileFolderData: any }) => {
   const [visibility, setVisibility] = useState<{ [key: string]: boolean }>({});
+  const [createType, setCreateType] = useState<"file" | "folder">("file");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
   const { editorSocket } = useEditorSocketStore();
-  const {projectId} = useTreeStructureStore();
-  function toggleVisibility(nodeId: string) {
+  const { projectId } = useTreeStructureStore();
+
+  const toggleVisibility = (nodeId: string) => {
     setVisibility((prev) => ({
       ...prev,
       [nodeId]: !prev[nodeId],
     }));
-  }
+  };
 
-  function handleDoubleClick(fileFolderData: any) {
+  const handleDoubleClick = (fileFolderData: any) => {
     if (editorSocket?.connected) {
-      console.log("📤 Emitting readFile for:", fileFolderData.path);
       editorSocket.emit("readFile", {
         pathToFileOrFolder: fileFolderData.path,
       });
-    } else {
-      console.warn("⚠️ Socket not connected or not a file");
     }
-  }
+  };
 
-function handleFileDelete(filePath: string) {
-  console.log("Deleting file:", filePath);
-  if (editorSocket?.connected && projectId) {
-    editorSocket.emit("deleteFile", {
-      pathToFileOrFolder: filePath,
-      projectId, 
+  const handleDelete = (type: "file" | "folder", path: string) => {
+    if (!editorSocket?.connected || !projectId) return;
+    editorSocket.emit(type === "file" ? "deleteFile" : "deleteFolder", {
+      pathToFileOrFolder: path,
+      projectId,
     });
-  } else {
-    console.warn("Socket not connected or projectId missing");
-  }
-}
+  };
 
-function handleFolderDelete(folderPath: string) {
-  console.log("Deleting folder:", folderPath);
-  if (editorSocket?.connected) {
-   editorSocket.emit("deleteFolder", {
-  pathToFileOrFolder: folderPath,
-  projectId,
-});
-  } else {
-    console.warn("Socket not connected");
-  }
-}
+  const handleCreate = (name: string) => {
+    const newPath = `${fileFolderData.path}/${name}`;
+    if (!editorSocket?.connected || !projectId) return;
+
+    editorSocket.emit(createType === "file" ? "createFile" : "createFolder", {
+      pathToFileOrFolder: newPath,
+      projectId,
+    });
+
+    setIsDialogOpen(false); // close modal after submit
+  };
 
   const isExpanded = visibility[fileFolderData.name];
 
   return (
-    fileFolderData && (
+    <>
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <form>
+        <DialogContent className="sm:max-w-[425px] border-0">
+          <InputModalBody
+            type={createType}
+            onCreate={handleCreate}
+            onCancel={() => setIsDialogOpen(false)}
+          />
+        </DialogContent>
+        </form>
+      </Dialog>
+
       <div className="select-none">
         {fileFolderData.children ? (
           <ContextMenu>
@@ -88,40 +102,18 @@ function handleFolderDelete(folderPath: string) {
             </ContextMenuTrigger>
 
             <ContextMenuContent className="w-52 bg-[#1E1E1E] text-gray-200 border-0 shadow-md">
-              <ContextMenuItem
-                onClick={() => console.log("📂 Rename Folder", fileFolderData.path)}
-              >
-                Rename
+              <ContextMenuItem onClick={() => setIsDialogOpen(true) || setCreateType("file")}>
+                 Create File
+              </ContextMenuItem>
+              <ContextMenuItem onClick={() => setIsDialogOpen(true) || setCreateType("folder")}>
+                 Create Folder
               </ContextMenuItem>
               <ContextMenuItem
-                onClick={(e) => handleFolderDelete(fileFolderData.path)}
+                onClick={() => handleDelete("folder", fileFolderData.path)}
                 variant="destructive"
               >
-                Delete
+                 Delete Folder
               </ContextMenuItem>
-               <ContextMenuItem
-                onClick={() => {
-    const newFilePath = `${fileFolderData.path}/newfile.js`;
-    editorSocket?.emit("createFile", {
-      pathToFileOrFolder: newFilePath,
-      projectId,
-    });
-  }}
-              >
-              Create File
-              </ContextMenuItem>
-               <ContextMenuItem
-                 onClick={() => {
-    const newFolderPath = `${fileFolderData.path}/NewFolder`;
-    editorSocket?.emit("createFolder", {
-      pathToFileOrFolder: newFolderPath,
-      projectId,
-    });
-  }}
-              >
-                Create Folder
-              </ContextMenuItem>
-
             </ContextMenuContent>
 
             {isExpanded && fileFolderData.children && (
@@ -149,20 +141,15 @@ function handleFolderDelete(folderPath: string) {
 
             <ContextMenuContent className="w-52 bg-[#1E1E1E] text-gray-200 border-0 shadow-md">
               <ContextMenuItem
-                onClick={() => console.log("📄 Rename File", fileFolderData.path)}
-              >
-                Rename
-              </ContextMenuItem>
-             <ContextMenuItem
-                onClick={() => handleFileDelete(fileFolderData.path)} 
+                onClick={() => handleDelete("file", fileFolderData.path)}
                 variant="destructive"
               >
-                Delete
+                Delete File
               </ContextMenuItem>
             </ContextMenuContent>
           </ContextMenu>
         )}
       </div>
-    )
+    </>
   );
 };
