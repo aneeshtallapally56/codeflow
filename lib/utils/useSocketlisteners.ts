@@ -51,5 +51,13 @@ export const useSocketListeners = () => {
     editorSocket.onAny((event, ...args) => {
       console.log("📡 Received socket event:", event, args);
     });
+    editorSocket.on("fileCreated", ({ path }) => {
+  console.log("🆕 fileCreated broadcast for:", path);
+  setTreeStructure(); // refresh tree
+});
+editorSocket.on("folderCreated", ({ path }) => {
+  console.log("📁 folderCreated broadcast for:", path);
+  setTreeStructure(); // refresh tree
+});
   }, [editorSocket]);
 };

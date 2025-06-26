@@ -99,6 +99,29 @@ function handleFolderDelete(folderPath: string) {
               >
                 Delete
               </ContextMenuItem>
+               <ContextMenuItem
+                onClick={() => {
+    const newFilePath = `${fileFolderData.path}/newfile.js`;
+    editorSocket?.emit("createFile", {
+      pathToFileOrFolder: newFilePath,
+      projectId,
+    });
+  }}
+              >
+              Create File
+              </ContextMenuItem>
+               <ContextMenuItem
+                 onClick={() => {
+    const newFolderPath = `${fileFolderData.path}/NewFolder`;
+    editorSocket?.emit("createFolder", {
+      pathToFileOrFolder: newFolderPath,
+      projectId,
+    });
+  }}
+              >
+                Create Folder
+              </ContextMenuItem>
+
             </ContextMenuContent>
 
             {isExpanded && fileFolderData.children && (
