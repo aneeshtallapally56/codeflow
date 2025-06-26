@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { Socket } from 'socket.io-client';
 import { useActiveFileTabStore } from './activeFileTabStore';
+import path from 'path';
 
 type EditorSocketState = {
   editorSocket: Socket | null;
@@ -17,6 +18,13 @@ export const useEditorSocketStore = create<EditorSocketState>((set) => ({
     console.log('readFileSuccess event received',data);
     activeFileTabSetter(data.path,data.value , data.extension);
   });
+  //listen for the 'writeFileSuccess' event from the incoming socket
+  incomingSocket?.on('writeFileSuccess', (data) => {
+    console.log('writeFileSuccess event received', data);
+   incomingSocket?.emit('readFile',{
+      pathToFileOrFolder: data.path,
+    })});
+   
     set({ editorSocket: incomingSocket });
   },
 }));
