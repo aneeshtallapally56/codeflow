@@ -24,7 +24,7 @@ export const InputModalBody = ({
     const trimmedName = name.trim();
     if (!trimmedName) return;
     onCreate(trimmedName);
-    setName(""); // Reset after submit
+    setName(""); 
   };
 
   return (
@@ -48,7 +48,7 @@ export const InputModalBody = ({
             <DialogClose asChild>
               <Button variant="outline">Cancel</Button>
             </DialogClose>
-            <Button className="bg-white text-black " type="submit">Create</Button>
+            <Button className="bg-white text-black " type="submit" onClick={handleSubmit}>Create</Button>
           </DialogFooter>
     </>
   );

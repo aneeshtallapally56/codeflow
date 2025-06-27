@@ -8,6 +8,7 @@ import { useTreeStructureStore } from "@/lib/store/treeStructureStore";
 import { useParams } from "next/navigation";
 import { useSocketListeners } from "@/lib/utils/useSocketlisteners";
 import { InputModal } from "@/components/molecules/InputModal/InputModal";
+import EditorTabs from "@/components/atoms/EditorTabs";
 
 export default function Page() {
   const rawProjectId = useParams().id;
@@ -63,6 +64,7 @@ export default function Page() {
     <div className="w-full h-screen bg-[#121212] flex justify-between md:px-16 px-4 py-6">
       <div className="h-full w-full">
         <TopBar />
+
         <Editorcomponent />
 
       </div>

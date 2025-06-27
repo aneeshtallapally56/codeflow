@@ -14,7 +14,8 @@ import {
 } from "@/components/ui/dialog";
 import { useEditorSocketStore } from "@/lib/store/editorSocketStore";
 import { useTreeStructureStore } from "@/lib/store/treeStructureStore";
-import { InputModalBody } from "@/components/molecules/InputModal/InputModalBody"; // extract modal body into a separate component
+import { InputModalBody } from "@/components/molecules/InputModal/InputModalBody";
+
 
 export const TreeNode = ({ fileFolderData }: { fileFolderData: any }) => {
   const [visibility, setVisibility] = useState<{ [key: string]: boolean }>({});
@@ -24,6 +25,7 @@ export const TreeNode = ({ fileFolderData }: { fileFolderData: any }) => {
   const { editorSocket } = useEditorSocketStore();
   const { projectId } = useTreeStructureStore();
 
+
   const toggleVisibility = (nodeId: string) => {
     setVisibility((prev) => ({
       ...prev,
@@ -32,6 +34,7 @@ export const TreeNode = ({ fileFolderData }: { fileFolderData: any }) => {
   };
 
   const handleDoubleClick = (fileFolderData: any) => {
+  
     if (editorSocket?.connected) {
       editorSocket.emit("readFile", {
         pathToFileOrFolder: fileFolderData.path,
@@ -56,7 +59,18 @@ export const TreeNode = ({ fileFolderData }: { fileFolderData: any }) => {
       projectId,
     });
 
-    setIsDialogOpen(false); // close modal after submit
+    setIsDialogOpen(false);
+  };
+
+  // Fixed: Separate functions for opening create dialogs
+  const openCreateFileDialog = () => {
+    setCreateType("file");
+    setIsDialogOpen(true);
+  };
+
+  const openCreateFolderDialog = () => {
+    setCreateType("folder");
+    setIsDialogOpen(true);
   };
 
   const isExpanded = visibility[fileFolderData.name];
@@ -64,7 +78,6 @@ export const TreeNode = ({ fileFolderData }: { fileFolderData: any }) => {
   return (
     <>
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <form>
         <DialogContent className="sm:max-w-[425px] border-0">
           <InputModalBody
             type={createType}
@@ -72,7 +85,6 @@ export const TreeNode = ({ fileFolderData }: { fileFolderData: any }) => {
             onCancel={() => setIsDialogOpen(false)}
           />
         </DialogContent>
-        </form>
       </Dialog>
 
       <div className="select-none">
@@ -102,17 +114,17 @@ export const TreeNode = ({ fileFolderData }: { fileFolderData: any }) => {
             </ContextMenuTrigger>
 
             <ContextMenuContent className="w-52 bg-[#1E1E1E] text-gray-200 border-0 shadow-md">
-              <ContextMenuItem onClick={() => setIsDialogOpen(true) || setCreateType("file")}>
-                 Create File
+              <ContextMenuItem onClick={openCreateFileDialog}>
+                Create File
               </ContextMenuItem>
-              <ContextMenuItem onClick={() => setIsDialogOpen(true) || setCreateType("folder")}>
-                 Create Folder
+              <ContextMenuItem onClick={openCreateFolderDialog}>
+                Create Folder
               </ContextMenuItem>
               <ContextMenuItem
                 onClick={() => handleDelete("folder", fileFolderData.path)}
                 variant="destructive"
               >
-                 Delete Folder
+                Delete Folder
               </ContextMenuItem>
             </ContextMenuContent>
 

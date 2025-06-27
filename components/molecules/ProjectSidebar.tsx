@@ -1,44 +1,29 @@
-// components/layout/app-sidebar.tsx
 'use client'
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarHeader,
-  SidebarFooter,
-  SidebarGroup,
-
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem
-} from "@/components/ui/sidebar"
 import { useTreeStructureStore } from "@/lib/store/treeStructureStore";
-import { TreeNode } from "./TreeNode/TreeNode";
 import TreeStructure from "../organisms/TreeStructure/TreeStructure";
+import { X } from "lucide-react";
 
+interface ProjectSidebarProps {
+  onClose: () => void;
+}
 
-
-
-
-export function ProjectSidebar() {
-    const { treeStructure } = useTreeStructureStore();
+export function ProjectSidebar({ onClose }: ProjectSidebarProps) {
+  const { treeStructure } = useTreeStructureStore();
+  
   return (
-    <Sidebar className="bg-[--sidebar] text-[--sidebar-foreground] border-r border-[--sidebar-border]">
-      <SidebarContent>
+    <div className="w-80 h-full flex flex-col relative" style={{backgroundColor: '#1E1E1E'}}>
+      {/* Close button - positioned at top right */}
+      <button
+        onClick={onClose}
+        className="absolute top-2 right-2 z-10 p-1 hover:bg-gray-800 rounded transition-colors text-gray-400"
+      >
+        <X size={16} />
+      </button>
 
-       
-
-        {/* MENU CONTENT */}
-        <div className="flex-1 overflow-auto">
-          <SidebarGroup>
-            <SidebarMenu>
-             <SidebarMenuItem>
-             <TreeStructure />
-            </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroup>
-        </div>
-
-      </SidebarContent>
-    </Sidebar>
-  )
+      {/* Sidebar content */}
+      <div className="flex-1 overflow-auto">
+        <TreeStructure />
+      </div>
+    </div>
+  );
 }

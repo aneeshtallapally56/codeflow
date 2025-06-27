@@ -1,9 +1,10 @@
 'use client';
 import React, { useEffect, useRef } from 'react';
 import Editor from '@monaco-editor/react';
-import EditorButton from '@/components/atoms/EditorButton';
+
 import { useEditorSocketStore } from '@/lib/store/editorSocketStore';
 import { useActiveFileTabStore } from '@/lib/store/activeFileTabStore';
+import EditorTabs from '@/components/atoms/EditorTabs';
 
 export default function Editorcomponent() {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -77,8 +78,7 @@ export default function Editorcomponent() {
   return (
     <>
       <div className="flex gap-2 mb-4">
-        <EditorButton />
-        <EditorButton />
+       
       </div>
       <Editor
         height="70vh"
