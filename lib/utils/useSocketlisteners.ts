@@ -1,4 +1,4 @@
-
+'use client'
 import { useEffect } from "react";
 import path from "path";
 import { useEditorSocketStore } from "../store/editorSocketStore";
@@ -69,5 +69,17 @@ editorSocket.on("folderCreated", ({ path }) => {
   console.log("📁 folderCreated broadcast for:", path);
   setTreeStructure(); // refresh tree
 });
-  }, [editorSocket]);
+editorSocket.on("userJoined", ({ userId, socketId }) => {
+  console.log("👤 User joined the project:", { userId, socketId });
+  // 🔔 Optional: Show a toast or update a collaborator list
+  // showToast(`${userId} joined`);
+});
+editorSocket.on("userLeft", ({ userId, socketId }) => {
+  console.log("👤 User left the project:", { userId, socketId });
+  // 🔔 Optional: Show a toast or update a collaborator list
+  // showToast(`${userId} joined`);
+});
+
+
+  }, [editorSocket, openFile, setActiveFileTab, setTreeStructure]);
 };

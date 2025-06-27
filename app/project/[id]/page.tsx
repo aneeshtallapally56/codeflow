@@ -7,7 +7,7 @@ import { useEditorSocketStore } from "@/lib/store/editorSocketStore";
 import { useTreeStructureStore } from "@/lib/store/treeStructureStore";
 import { useParams } from "next/navigation";
 import { useSocketListeners } from "@/lib/utils/useSocketlisteners";
-import { InputModal } from "@/components/molecules/InputModal/InputModal";
+
 import EditorTabs from "@/components/atoms/EditorTabs";
 
 export default function Page() {
@@ -28,6 +28,9 @@ export default function Page() {
     }
 
     const socket: Socket = io(`${process.env.NEXT_PUBLIC_BACKEND_URL!}/editor`, {
+      auth:{
+        token:localStorage.getItem("token") || "",
+      },
       query: { projectId },
     });
 
