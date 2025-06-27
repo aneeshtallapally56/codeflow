@@ -21,33 +21,31 @@ export default function Page() {
   useSocketListeners();
 
   // 🔗 Establish socket connection once
-  useEffect(() => {
-    if (!projectId) {
-      console.error("❌ No projectId in route");
-      return;
-    }
+useEffect(() => {
+  if (!projectId) {
+    console.error("❌ No projectId in route");
+    return;
+  }
 
-    const socket: Socket = io(`${process.env.NEXT_PUBLIC_BACKEND_URL!}/editor`, {
-      auth:{
-        token:localStorage.getItem("token") || "",
-      },
-      query: { projectId },
-    });
+  const socket: Socket = io(`${process.env.NEXT_PUBLIC_BACKEND_URL!}/editor`, {
+    withCredentials: true, // ✅ Important: allows sending cookies in WebSocket
+    query: { projectId },
+  });
 
-    socket.on("connect", () => {
-      console.log("✅ Socket connected:", socket.id);
-      setEditorSocket(socket);
-    });
+  socket.on("connect", () => {
+    console.log("✅ Socket connected:", socket.id);
+    setEditorSocket(socket);
+  });
 
-    socket.on("connect_error", (err) => {
-      console.error("❌ Socket connection failed:", err.message);
-    });
+  socket.on("connect_error", (err) => {
+    console.error("❌ Socket connection failed:", err.message);
+  });
 
-    return () => {
-      socket.disconnect();
-      console.log("🔌 Socket disconnected");
-    };
-  }, [projectId, setEditorSocket]);
+  return () => {
+    socket.disconnect();
+    console.log("🔌 Socket disconnected");
+  };
+}, [projectId, setEditorSocket]);
 
   // 🧠 Join project room and initialize tree structure
   useEffect(() => {
