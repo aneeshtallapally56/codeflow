@@ -61,12 +61,13 @@ export default function Page() {
   }
 
   return (
-    <div className="w-full h-screen bg-[#121212] flex justify-between md:px-16 px-4 py-6">
-      <div className="h-full w-full">
+    <div className="w-full h-full bg-[#121212] flex flex-col md:px-16 px-4 py-6 min-w-0">
+      <div className="h-full w-full flex flex-col min-w-0 overflow-hidden">
         <TopBar />
-
-        <Editorcomponent />
-
+        <EditorTabs />
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <Editorcomponent />
+        </div>
       </div>
     </div>
   );

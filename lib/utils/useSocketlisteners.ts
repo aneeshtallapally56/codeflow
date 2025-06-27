@@ -1,8 +1,10 @@
 
 import { useEffect } from "react";
+import path from "path";
 import { useEditorSocketStore } from "../store/editorSocketStore";
 import { useActiveFileTabStore } from "../store/activeFileTabStore";
 import { useTreeStructureStore } from "../store/treeStructureStore";
+import { useEditorTabStore } from "../store/editorTabStores";
 
 let listenersInitialized = false;
 
@@ -10,6 +12,7 @@ export const useSocketListeners = () => {
   const { editorSocket } = useEditorSocketStore();
   const { setActiveFileTab } = useActiveFileTabStore();
   const { setTreeStructure } = useTreeStructureStore();
+  const { openFile } = useEditorTabStore();
 
   useEffect(() => {
     if (!editorSocket || listenersInitialized) return;
@@ -17,7 +20,14 @@ export const useSocketListeners = () => {
 
     editorSocket.on("readFileSuccess", (data) => {
       console.log("✅ readFileSuccess:", data);
+       openFile({
+    path: data.path,
+    name: path.basename(data.path),
+    content: data.value,
+    extension: data.extension,
+  });
       setActiveFileTab(data.path, data.value, data.extension);
+
     });
 
     editorSocket.on("writeFileSuccess", (data) => {
