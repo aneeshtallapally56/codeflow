@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ProjectSidebar } from "@/components/molecules/ProjectSidebar";
 import { Menu } from "lucide-react";
 
-export default function layout({ children }: { children: React.ReactNode }) {
+export default function Layout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (

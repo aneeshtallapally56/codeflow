@@ -4,39 +4,40 @@ import Editor from '@monaco-editor/react';
 
 import { useEditorSocketStore } from '@/lib/store/editorSocketStore';
 import { useActiveFileTabStore } from '@/lib/store/activeFileTabStore';
-import EditorTabs from '@/components/atoms/EditorTabs';
 
 export default function Editorcomponent() {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const previousPathRef = useRef<string | null>(null);
 
-  const { editorSocket, joinFileRoom, leaveFileRoom } = useEditorSocketStore();
+  const {
+    editorSocket,
+    emitJoinFileRoom,
+    emitLeaveFileRoom,
+    emitSocketEvent,
+  } = useEditorSocketStore();
+
   const { activeFileTab } = useActiveFileTabStore();
 
-  // Assuming projectId can be extracted from file path (e.g., `/generated-projects/<projectId>/src/file.js`)
   const extractProjectId = (fullPath: string) => {
     const segments = fullPath.split('/');
     const index = segments.indexOf('generated-projects');
     return index !== -1 && segments[index + 1] ? segments[index + 1] : '';
   };
 
-  // Join/Leave file room based on file change
   useEffect(() => {
     const newPath = activeFileTab?.path;
     const oldPath = previousPathRef.current;
 
     if (editorSocket && newPath && newPath !== oldPath) {
       const projectId = extractProjectId(newPath);
-      
       if (oldPath) {
-        leaveFileRoom(projectId, oldPath);
+        emitLeaveFileRoom(projectId, oldPath);
       }
-      joinFileRoom(projectId, newPath);
+      emitJoinFileRoom(projectId, newPath);
       previousPathRef.current = newPath;
     }
-  }, [activeFileTab?.path, editorSocket, joinFileRoom, leaveFileRoom]);
+  }, [activeFileTab?.path, editorSocket, emitJoinFileRoom, emitLeaveFileRoom]);
 
-  // Debounced file writing
   function handleChange(value: string | undefined) {
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
@@ -45,7 +46,7 @@ export default function Editorcomponent() {
       const projectId = filePath ? extractProjectId(filePath) : '';
 
       if (filePath && projectId) {
-        editorSocket?.emit('writeFile', {
+        emitSocketEvent('writeFile', {
           data: editorContent,
           pathToFileOrFolder: filePath,
           projectId,
@@ -54,7 +55,6 @@ export default function Editorcomponent() {
     }, 2000);
   }
 
-  // Cleanup timer on unmount
   useEffect(() => {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
@@ -76,25 +76,24 @@ export default function Editorcomponent() {
   };
 
   return (
-    <>
-      <div className="flex gap-2 mb-4">
-       
-      </div>
-      <Editor
-        height="70vh"
-        width="100%"
-        theme="vs-dark"
-        language={activeFileTab?.extension ? getLanguage(activeFileTab.extension) : 'javascript'}
-        value={activeFileTab?.value || "// No file selected"}
-        onChange={handleChange}
-        options={{
-          fontSize: 16,
-          fontFamily: 'Fira Code, monospace',
-          minimap: { enabled: false },
-          automaticLayout: true,
-          readOnly: !activeFileTab,
-        }}
-      />
-    </>
+    <Editor
+      height="70vh"
+      width="100%"
+      theme="vs-dark"
+      language={
+        activeFileTab?.extension
+          ? getLanguage(activeFileTab.extension)
+          : 'javascript'
+      }
+      value={activeFileTab?.value || '// No file selected'}
+      onChange={handleChange}
+      options={{
+        fontSize: 16,
+        fontFamily: 'Fira Code, monospace',
+        minimap: { enabled: false },
+        automaticLayout: true,
+        readOnly: !activeFileTab,
+      }}
+    />
   );
 }

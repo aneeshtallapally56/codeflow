@@ -1,12 +1,13 @@
 "use client";
+
 import React, { useEffect } from "react";
-import { io, Socket } from "socket.io-client";
 import Editorcomponent from "@/components/molecules/EditorComponent/Editorcomponent";
 import { TopBar } from "@/components/organisms/TopBar";
 import { useEditorSocketStore } from "@/lib/store/editorSocketStore";
 import { useTreeStructureStore } from "@/lib/store/treeStructureStore";
 import { useParams } from "next/navigation";
 import { useSocketListeners } from "@/lib/utils/useSocketlisteners";
+import { connectEditorSocket } from "@/lib/socket/editorSocketClient";
 
 import EditorTabs from "@/components/atoms/EditorTabs";
 
@@ -17,37 +18,29 @@ export default function Page() {
   const { setEditorSocket, editorSocket } = useEditorSocketStore();
   const { setProjectId, joinProjectRoom, setTreeStructure } = useTreeStructureStore();
 
-  // 🔌 Attach listeners globally to the socket stored in Zustand
+  // 🔌 Attach listeners globally
   useSocketListeners();
 
-  // 🔗 Establish socket connection once
-useEffect(() => {
-  if (!projectId) {
-    console.error("❌ No projectId in route");
-    return;
-  }
+  // 🔗 Establish socket connection
+  useEffect(() => {
+    if (!projectId) {
+      console.error("❌ No projectId in route");
+      return;
+    }
+    const socket = connectEditorSocket(projectId);
 
-  const socket: Socket = io(`${process.env.NEXT_PUBLIC_BACKEND_URL!}/editor`, {
-    withCredentials: true, // ✅ Important: allows sending cookies in WebSocket
-    query: { projectId },
-  });
+    socket.on("connect", () => {
+      console.log("✅ Socket connected:", socket.id);
+      setEditorSocket(socket);
+    });
 
-  socket.on("connect", () => {
-    console.log("✅ Socket connected:", socket.id);
-    setEditorSocket(socket);
-  });
+    return () => {
+      socket.disconnect();
+      console.log("🔌 Socket disconnected");
+    };
+  }, [projectId, setEditorSocket]);
 
-  socket.on("connect_error", (err) => {
-    console.error("❌ Socket connection failed:", err.message);
-  });
-
-  return () => {
-    socket.disconnect();
-    console.log("🔌 Socket disconnected");
-  };
-}, [projectId, setEditorSocket]);
-
-  // 🧠 Join project room and initialize tree structure
+  // 🧠 Join project room + fetch tree
   useEffect(() => {
     if (!projectId || !editorSocket?.connected) return;
 

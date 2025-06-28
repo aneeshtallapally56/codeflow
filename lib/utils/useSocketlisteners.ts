@@ -19,14 +19,21 @@ export const useSocketListeners = () => {
     listenersInitialized = true;
 
     editorSocket.on("readFileSuccess", (data) => {
-      console.log("✅ readFileSuccess:", data);
-       openFile({
+     console.log("✅ readFileSuccess:", data);
+  const fileTab = {
     path: data.path,
     name: path.basename(data.path),
     content: data.value,
     extension: data.extension,
+  };
+console.log("📂 Opening file tab:", fileTab);
+  openFile(fileTab);
+
+  setActiveFileTab({
+    path: data.path,
+    value: data.value,
+    extension: data.extension,
   });
-      setActiveFileTab(data.path, data.value, data.extension);
 
     });
 

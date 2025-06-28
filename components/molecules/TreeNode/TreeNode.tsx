@@ -16,15 +16,22 @@ import { useEditorSocketStore } from "@/lib/store/editorSocketStore";
 import { useTreeStructureStore } from "@/lib/store/treeStructureStore";
 import { InputModalBody } from "@/components/molecules/InputModal/InputModalBody";
 
+type TreeNodeProps = {
+  fileFolderData: {
+    name: string;
+    path: string;
+    type: "file" | "folder";
+    children?: TreeNodeProps["fileFolderData"][];
+  };
+};
 
-export const TreeNode = ({ fileFolderData }: { fileFolderData: any }) => {
+export const TreeNode = ({ fileFolderData }: TreeNodeProps) => {
   const [visibility, setVisibility] = useState<{ [key: string]: boolean }>({});
   const [createType, setCreateType] = useState<"file" | "folder">("file");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const { editorSocket } = useEditorSocketStore();
+  const { emitSocketEvent } = useEditorSocketStore();
   const { projectId } = useTreeStructureStore();
-
 
   const toggleVisibility = (nodeId: string) => {
     setVisibility((prev) => ({
@@ -33,44 +40,35 @@ export const TreeNode = ({ fileFolderData }: { fileFolderData: any }) => {
     }));
   };
 
-  const handleDoubleClick = (fileFolderData: any) => {
-  
-    if (editorSocket?.connected) {
-      editorSocket.emit("readFile", {
-        pathToFileOrFolder: fileFolderData.path,
-      });
-    }
+  const handleDoubleClick = () => {
+    emitSocketEvent("readFile", {
+      pathToFileOrFolder: fileFolderData.path,
+    });
+    
   };
 
-  const handleDelete = (type: "file" | "folder", path: string) => {
-    if (!editorSocket?.connected || !projectId) return;
-    editorSocket.emit(type === "file" ? "deleteFile" : "deleteFolder", {
-      pathToFileOrFolder: path,
+  const handleDelete = () => {
+    if (!projectId) return;
+
+    const event = fileFolderData.type === "file" ? "deleteFile" : "deleteFolder";
+    emitSocketEvent(event, {
+      pathToFileOrFolder: fileFolderData.path,
       projectId,
     });
   };
 
   const handleCreate = (name: string) => {
-    const newPath = `${fileFolderData.path}/${name}`;
-    if (!editorSocket?.connected || !projectId) return;
+    if (!projectId) return;
 
-    editorSocket.emit(createType === "file" ? "createFile" : "createFolder", {
+    const newPath = `${fileFolderData.path}/${name}`;
+    const event = createType === "file" ? "createFile" : "createFolder";
+
+    emitSocketEvent(event, {
       pathToFileOrFolder: newPath,
       projectId,
     });
 
     setIsDialogOpen(false);
-  };
-
-  // Fixed: Separate functions for opening create dialogs
-  const openCreateFileDialog = () => {
-    setCreateType("file");
-    setIsDialogOpen(true);
-  };
-
-  const openCreateFolderDialog = () => {
-    setCreateType("folder");
-    setIsDialogOpen(true);
   };
 
   const isExpanded = visibility[fileFolderData.name];
@@ -96,42 +94,31 @@ export const TreeNode = ({ fileFolderData }: { fileFolderData: any }) => {
                 onClick={() => toggleVisibility(fileFolderData.name)}
               >
                 <span className="flex items-center justify-center w-4 h-4 mr-1.5 text-gray-400 group-hover:text-gray-300">
-                  {isExpanded ? (
-                    <IoIosArrowDown className="w-3 h-3" />
-                  ) : (
-                    <IoIosArrowForward className="w-3 h-3" />
-                  )}
+                  {isExpanded ? <IoIosArrowDown className="w-3 h-3" /> : <IoIosArrowForward className="w-3 h-3" />}
                 </span>
                 <span className="flex items-center justify-center w-4 h-4 mr-2 text-blue-400">
-                  {isExpanded ? (
-                    <FolderOpen className="w-4 h-4" />
-                  ) : (
-                    <FolderIcon className="w-4 h-4" />
-                  )}
+                  {isExpanded ? <FolderOpen className="w-4 h-4" /> : <FolderIcon className="w-4 h-4" />}
                 </span>
                 <span className="font-medium truncate">{fileFolderData.name}</span>
               </button>
             </ContextMenuTrigger>
 
             <ContextMenuContent className="w-52 bg-[#1E1E1E] text-gray-200 border-0 shadow-md">
-              <ContextMenuItem onClick={openCreateFileDialog}>
+              <ContextMenuItem onClick={() => { setCreateType("file"); setIsDialogOpen(true); }}>
                 Create File
               </ContextMenuItem>
-              <ContextMenuItem onClick={openCreateFolderDialog}>
+              <ContextMenuItem onClick={() => { setCreateType("folder"); setIsDialogOpen(true); }}>
                 Create Folder
               </ContextMenuItem>
-              <ContextMenuItem
-                onClick={() => handleDelete("folder", fileFolderData.path)}
-                variant="destructive"
-              >
+              <ContextMenuItem onClick={handleDelete} variant="destructive">
                 Delete Folder
               </ContextMenuItem>
             </ContextMenuContent>
 
-            {isExpanded && fileFolderData.children && (
+            {isExpanded && (
               <div className="ml-3 border-l border-gray-600/40 pl-2">
-                {fileFolderData.children.map((child: any) => (
-                  <TreeNode key={child.name} fileFolderData={child} />
+                {fileFolderData.children.map((child) => (
+                  <TreeNode key={child.path} fileFolderData={child} />
                 ))}
               </div>
             )}
@@ -141,7 +128,7 @@ export const TreeNode = ({ fileFolderData }: { fileFolderData: any }) => {
             <ContextMenuTrigger asChild>
               <div
                 className="flex items-center px-2 py-1.5 text-sm text-gray-300 hover:bg-gray-700/50 hover:text-white rounded-md transition-colors duration-150 cursor-pointer group"
-                onDoubleClick={() => handleDoubleClick(fileFolderData)}
+                onDoubleClick={handleDoubleClick}
               >
                 <span className="flex items-center justify-center w-4 h-4 mr-1.5" />
                 <span className="flex items-center justify-center w-4 h-4 mr-2 text-gray-400 group-hover:text-gray-300">
@@ -152,10 +139,7 @@ export const TreeNode = ({ fileFolderData }: { fileFolderData: any }) => {
             </ContextMenuTrigger>
 
             <ContextMenuContent className="w-52 bg-[#1E1E1E] text-gray-200 border-0 shadow-md">
-              <ContextMenuItem
-                onClick={() => handleDelete("file", fileFolderData.path)}
-                variant="destructive"
-              >
+              <ContextMenuItem onClick={handleDelete} variant="destructive">
                 Delete File
               </ContextMenuItem>
             </ContextMenuContent>

@@ -1,14 +1,14 @@
 import { create } from "zustand";
 import { useActiveFileTabStore } from "./activeFileTabStore";
 
-type FileTab = {
+export type FileTab = {
   path: string;
   name: string;
   content: string;
   extension: string;
 };
 
-type State = {
+type EditorTabStore = {
   openTabs: FileTab[];
   activePath: string | null;
   setActivePath: (path: string) => void;
@@ -16,56 +16,61 @@ type State = {
   closeFile: (path: string) => void;
 };
 
-export const useEditorTabStore = create<State>((set) => ({
+export const useEditorTabStore = create<EditorTabStore>((set, get) => ({
   openTabs: [],
   activePath: null,
 
   setActivePath: (path) => {
-    set((state) => {
-      const tab = state.openTabs.find((t) => t.path === path);
-      if (tab) {
-        const setActiveFileTab = useActiveFileTabStore.getState().setActiveFileTab;
-        setActiveFileTab(tab.path, tab.content, tab.extension);
-      }
-      return { activePath: path };
+    const tab = get().openTabs.find((t) => t.path === path);
+    if (tab) {
+      useActiveFileTabStore.getState().setActiveFileTab({
+        path: tab.path,
+        value: tab.content,
+        extension: tab.extension,
+      });
+      set({ activePath: path });
+    }
+  },
+
+  openFile: (file) => {
+    const exists = get().openTabs.some((tab) => tab.path === file.path);
+    const updatedTabs = exists ? get().openTabs : [...get().openTabs, file];
+
+    useActiveFileTabStore.getState().setActiveFileTab({
+      path: file.path,
+      value: file.content,
+      extension: file.extension,
+    });
+
+    set({
+      openTabs: updatedTabs,
+      activePath: file.path,
     });
   },
 
-  openFile: (file) =>
-    set((state) => {
-      const exists = state.openTabs.some((tab) => tab.path === file.path);
-      const newTabs = exists ? state.openTabs : [...state.openTabs, file];
+  closeFile: (path) => {
+    const { openTabs, activePath } = get();
+    const remainingTabs = openTabs.filter((tab) => tab.path !== path);
+    const newActive =
+      activePath === path
+        ? remainingTabs[0] ?? null
+        : openTabs.find((t) => t.path === activePath) ?? null;
 
-      const setActiveFileTab = useActiveFileTabStore.getState().setActiveFileTab;
-      setActiveFileTab(file.path, file.content, file.extension);
-
-      return {
-        openTabs: newTabs,
-        activePath: file.path,
-      };
-    }),
-
-  closeFile: (path) =>
-    set((state) => {
-      const remainingTabs = state.openTabs.filter((tab) => tab.path !== path);
-      const newActivePath =
-        state.activePath === path
-          ? remainingTabs[0]?.path || null
-          : state.activePath;
-
-      if (state.activePath === path) {
-        const nextTab = remainingTabs[0];
-        if (nextTab) {
-          const setActiveFileTab = useActiveFileTabStore.getState().setActiveFileTab;
-          setActiveFileTab(nextTab.path, nextTab.content, nextTab.extension);
-        } else {
-          useActiveFileTabStore.getState().clearActiveFileTab();
-        }
+    if (activePath === path) {
+      if (newActive) {
+        useActiveFileTabStore.getState().setActiveFileTab({
+          path: newActive.path,
+          value: newActive.content,
+          extension: newActive.extension,
+        });
+      } else {
+        useActiveFileTabStore.getState().clearActiveFileTab();
       }
+    }
 
-      return {
-        openTabs: remainingTabs,
-        activePath: newActivePath,
-      };
-    }),
+    set({
+      openTabs: remainingTabs,
+      activePath: newActive?.path || null,
+    });
+  },
 }));

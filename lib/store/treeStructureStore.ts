@@ -39,9 +39,7 @@ export const useTreeStructureStore = create<TreeStructureStore>((set, get) => ({
         queryKey: ['project-tree', projectId],
         queryFn: () => getProjectTree({ projectId }),
       });
-
       console.log(' Tree Structure fetched:', data);
-
       // Optional: Validate or fix missing 'type' fields
       set({ treeStructure: data });
     } catch (error) {

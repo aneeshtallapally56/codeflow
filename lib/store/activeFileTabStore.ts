@@ -6,21 +6,18 @@ type ActiveFileTab = {
   extension: string;
 };
 
-type ActiveFileTabStore = {
+type State = {
   activeFileTab: ActiveFileTab | null;
-  setActiveFileTab: (path: string, value: string, extension: string) => void;
+  setActiveFileTab: (tab: ActiveFileTab) => void;
   clearActiveFileTab: () => void;
 };
 
-export const useActiveFileTabStore = create<ActiveFileTabStore>((set) => ({
+export const useActiveFileTabStore = create<State>((set) => ({
   activeFileTab: null,
-  setActiveFileTab: (path, value, extension) =>
-    set({
-      activeFileTab: {
-        path,
-        value,
-        extension,
-      },
-    }),
+
+  setActiveFileTab: (tab) => {
+     console.log("🧠 Updating active file tab:", tab);
+    set({ activeFileTab: tab })},
+
   clearActiveFileTab: () => set({ activeFileTab: null }),
 }));

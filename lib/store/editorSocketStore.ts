@@ -1,25 +1,49 @@
+// store/editorSocketStore.ts
 import { create } from 'zustand';
 import { Socket } from 'socket.io-client';
 
 type EditorSocketState = {
   editorSocket: Socket | null;
+
+  // Init + connection
   setEditorSocket: (incomingSocket: Socket) => void;
-  joinFileRoom: (projectId: string, pathToFileOrFolder: string) => void;
-  leaveFileRoom: (projectId: string, pathToFileOrFolder: string) => void;
+
+  // File-level rooms
+  emitJoinFileRoom: (projectId: string, path: string) => void;
+  emitLeaveFileRoom: (projectId: string, path: string) => void;
+
+  // Project-level rooms
+  emitJoinProjectRoom: (projectId: string) => void;
+  emitLeaveProjectRoom: (projectId: string) => void;
+
+  // Future: generic emitter
+  emitSocketEvent: (event: string, payload: any) => void;
 };
 
 export const useEditorSocketStore = create<EditorSocketState>((set, get) => ({
   editorSocket: null,
 
-  setEditorSocket: (incomingSocket) => {
+  setEditorSocket: (incomingSocket: Socket) => {
     set({ editorSocket: incomingSocket });
   },
 
-  joinFileRoom: (projectId, pathToFileOrFolder) => {
-    get().editorSocket?.emit("joinFileRoom", { projectId, pathToFileOrFolder });
+  emitJoinFileRoom: (projectId, path) => {
+    get().editorSocket?.emit("joinFileRoom", { projectId, pathToFileOrFolder: path });
   },
 
-  leaveFileRoom: (projectId, pathToFileOrFolder) => {
-    get().editorSocket?.emit("leaveFileRoom", { projectId, pathToFileOrFolder });
+  emitLeaveFileRoom: (projectId, path) => {
+    get().editorSocket?.emit("leaveFileRoom", { projectId, pathToFileOrFolder: path });
+  },
+
+  emitJoinProjectRoom: (projectId) => {
+    get().editorSocket?.emit("joinProjectRoom", { projectId });
+  },
+
+  emitLeaveProjectRoom: (projectId) => {
+    get().editorSocket?.emit("leaveProjectRoom", { projectId });
+  },
+
+  emitSocketEvent: (event, payload) => {
+    get().editorSocket?.emit(event, payload);
   },
 }));
