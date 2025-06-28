@@ -1,5 +1,5 @@
 import { Code, Trash2 } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import Link from "next/link";
 
 

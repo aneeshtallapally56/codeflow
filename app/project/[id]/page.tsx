@@ -1,15 +1,19 @@
 "use client";
 
 import React, { useEffect } from "react";
+import { useParams } from "next/navigation";
+
 import Editorcomponent from "@/components/molecules/EditorComponent/Editorcomponent";
 import { TopBar } from "@/components/organisms/TopBar";
+import { CollaboratorPanel } from "@/components/molecules/CollabPanel/CollaboratorPanel";
+import EditorTabs from "@/components/atoms/EditorTabs";
+
 import { useEditorSocketStore } from "@/lib/store/editorSocketStore";
 import { useTreeStructureStore } from "@/lib/store/treeStructureStore";
-import { useParams } from "next/navigation";
-import { useSocketListeners } from "@/lib/utils/useSocketlisteners";
-import { connectEditorSocket } from "@/lib/socket/editorSocketClient";
 
-import EditorTabs from "@/components/atoms/EditorTabs";
+import { connectEditorSocket } from "@/lib/socket/editorSocketClient";
+import { useSocketListeners } from "@/lib/utils/useSocketlisteners";
+import { useRoomMembersStore } from "@/lib/store/roomMembersStore";
 
 export default function Page() {
   const rawProjectId = useParams().id;
@@ -18,29 +22,35 @@ export default function Page() {
   const { setEditorSocket, editorSocket } = useEditorSocketStore();
   const { setProjectId, joinProjectRoom, setTreeStructure } = useTreeStructureStore();
 
-  // 🔌 Attach listeners globally
+  // ✅ Attach socket listeners early (safe — will wait inside the hook)
   useSocketListeners();
 
-  // 🔗 Establish socket connection
+  // 🔌 Establish editor socket connection
   useEffect(() => {
-    if (!projectId) {
-      console.error("❌ No projectId in route");
-      return;
-    }
-    const socket = connectEditorSocket(projectId);
+  if (!projectId) return;
 
-    socket.on("connect", () => {
-      console.log("✅ Socket connected:", socket.id);
-      setEditorSocket(socket);
-    });
+  const socket = connectEditorSocket(projectId);
 
-    return () => {
-      socket.disconnect();
-      console.log("🔌 Socket disconnected");
-    };
-  }, [projectId, setEditorSocket]);
+  // 🟢 Immediately attach listener for initial users
+  socket.on("initialUsers", (users) => {
 
-  // 🧠 Join project room + fetch tree
+     console.log("🧠 Initial users:", users);
+    useRoomMembersStore.getState().setLiveUsers(users);
+  });
+
+  // 🔌 On connect
+  socket.on("connect", () => {
+    console.log("✅ Socket connected:", socket.id);
+    setEditorSocket(socket);
+  });
+
+  return () => {
+    socket.disconnect();
+    console.log("🔌 Socket disconnected");
+  };
+}, [projectId, setEditorSocket]);
+
+  // 🧠 Join room and fetch file structure
   useEffect(() => {
     if (!projectId || !editorSocket?.connected) return;
 
@@ -61,6 +71,9 @@ export default function Page() {
         <EditorTabs />
         <div className="flex-1 min-h-0 overflow-hidden">
           <Editorcomponent />
+        </div>
+        <div className="mt-4">
+          <CollaboratorPanel />
         </div>
       </div>
     </div>

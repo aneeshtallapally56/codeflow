@@ -1,5 +1,5 @@
 'use client'
-import { useTreeStructureStore } from "@/lib/store/treeStructureStore";
+
 import TreeStructure from "../organisms/TreeStructure/TreeStructure";
 import { X } from "lucide-react";
 
@@ -8,7 +8,7 @@ interface ProjectSidebarProps {
 }
 
 export function ProjectSidebar({ onClose }: ProjectSidebarProps) {
-  const { treeStructure } = useTreeStructureStore();
+
   
   return (
     <div className="w-80 h-full flex flex-col relative" style={{backgroundColor: '#1E1E1E'}}>
