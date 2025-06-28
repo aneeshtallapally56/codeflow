@@ -44,7 +44,7 @@ export function AuthCard({ type }: AuthCardProps) {
       : `${BASE_URL}/api/v1/auth/login`;
 
     try {
-      const res = await axios.post(endpoint, payload, {
+       await axios.post(endpoint, payload, {
         withCredentials: true,
       });
       router.push("/projects");

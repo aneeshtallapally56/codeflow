@@ -3,7 +3,6 @@ import { create } from 'zustand';
 
 type LiveUser = {
   userId: string;
-
   socketId: string;
 };
 
@@ -16,7 +15,9 @@ type State = {
 
 export const useRoomMembersStore = create<State>((set) => ({
   liveUsers: [],
-  setLiveUsers: (users) => set({ liveUsers: users }),
+  setLiveUsers: (users) => {
+    set({ liveUsers: users })
+  },
   addLiveUser: (user) =>
     set((state) => ({
       liveUsers: [...state.liveUsers.filter(u => u.socketId !== user.socketId), user],

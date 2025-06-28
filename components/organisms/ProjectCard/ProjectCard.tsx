@@ -1,6 +1,7 @@
 import { Code, Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import Link from "next/link";
+import axios from "axios";
 
 
 interface ProjectCardProps {
@@ -14,7 +15,8 @@ interface ProjectCardProps {
   user: {
     _id: string;
     username: string;
-  };
+  },
+ onDelete: (projectId: string) => void;
 }
 
 export const ProjectCard = ({
@@ -22,15 +24,19 @@ export const ProjectCard = ({
   createdAt,
   user,
   collaborators,
-    projectId,
-  
-
+ projectId,
+  onDelete
 }: ProjectCardProps) => {
  const formattedDate = new Date(createdAt).toDateString();
  console.log(title, createdAt, user, collaborators);
+
+  
   return (
     <div className="bg-gradient-to-b from-[#101010] to-[#121212] border border-zinc-800 p-4 rounded-lg text-zinc-300 w-[300px] md:w-[360px]">
-      <Trash2 className="h-5 w-5 text-red-400 cursor-pointer" />
+      <Trash2 onClick={()=>{
+        console.log("Delete project with ID:", projectId);
+        onDelete(projectId);
+      }} className="h-5 w-5 text-red-400 cursor-pointer" />
 
       {/* Header */}
       <div className="flex justify-between items-center mt-2">
