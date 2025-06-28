@@ -1,6 +1,6 @@
 import axiosInstance from '../config/axios-config';
 type CreateProjectPayload = {
-  name: string;        
+  title: string;        
 };
 type GetProjectTreePayload = {
   projectId: string;
@@ -29,3 +29,29 @@ try {
     
 }
 };
+
+ export const deleteProject = async (projectId: string) => {
+   try {const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+    const endpoint = `${BASE_URL}/api/v1/projects/${projectId}`;
+
+ await axiosInstance.delete(endpoint);
+}
+      
+     catch (error) {
+      console.error("Error deleting project:", error);
+      alert("Failed to delete project. Please try again.");
+    }
+  };
+
+  export const getProjects = async()=>{
+      try {
+        const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+        const endpoint = `${BASE_URL}/api/v1/projects`;
+        const res = await axiosInstance.get(endpoint);
+        console.log("Projects fetched:", res.data);
+        return res.data.projects;
+      } catch (error) {
+        console.error("Error fetching projects:", error);
+        throw error;
+      }
+  }

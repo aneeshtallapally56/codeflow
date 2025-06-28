@@ -3,7 +3,7 @@ import {useQuery} from '@tanstack/react-query';
 
 
 
-export const useProjectTree = (projectId) => {
+export const useProjectTree = (projectId:string) => {
   const {isLoading,isError,data:projectTree,error}=useQuery({
      queryKey: ['project-tree', projectId],
     queryFn: ()=>getProjectTree({projectId}),
