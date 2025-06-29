@@ -78,11 +78,11 @@ export const useSocketListeners = () => {
       console.log("📁 folderCreated broadcast for:", path);
       setTreeStructure(); // refresh tree
     });
-    editorSocket.on("userJoined", ({ userId, socketId }) => {
+    editorSocket.on("userJoined", ({ userId,username, socketId }) => {
       console.log("👤 User joined the project:", { userId, socketId });
-      useRoomMembersStore.getState().addLiveUser({ userId, socketId });
-      // 🔔 Optional: Show a toast or update a collaborator list
-      toast.success(`${userId} joined the project`);
+      useRoomMembersStore.getState().addLiveUser({ userId, username, socketId });
+
+      toast.success(`${username} joined the project`);
     });
     editorSocket.on("userLeft", ({ userId, socketId }) => {
       console.log("👤 User left the project:", { userId, socketId });

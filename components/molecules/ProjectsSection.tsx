@@ -29,7 +29,7 @@ export default function ProjectsSection() {
   const { deleteProjectMutation } = useDeleteProject();
 
   const { isLoading, isError, projects } = useProjects();
-  const { joinProjectMutation, isPending, isSuccess } = useJoinProject();
+ 
   const [inputModalOpen, setInputModalOpen] = useState(false);
  const [joinModalOpen, setJoinModalOpen] = useState(false);
 

@@ -3,6 +3,7 @@ import { create } from 'zustand';
 
 type LiveUser = {
   userId: string;
+  username: string;
   socketId: string;
 };
 

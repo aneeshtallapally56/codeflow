@@ -11,7 +11,7 @@ export const CollaboratorPanel = () => {
       {liveUsers.map((user) =>
   user.userId? (
     <div key={user.userId} className="badge">
-      {user.userId}
+      {user.username}
     </div>
   ) : null
 )}

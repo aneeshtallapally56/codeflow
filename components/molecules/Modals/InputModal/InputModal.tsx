@@ -23,6 +23,7 @@ import { useCreateProject } from "@/hooks/api/mutations/useCreateProject";
 import { toast } from "sonner";
 import { DialogTitle } from "@radix-ui/react-dialog";
 import { useEffect } from "react";
+import { CheckCircle, XCircle } from "lucide-react";
 
 interface FormValues {
   title: string;
@@ -56,15 +57,20 @@ export const InputModal = ({ open, onOpenChange }: InputModalProps) => {
   const onSubmit = async (data: FormValues) => {
     try {
       await createProjectMutation({ title: data.title , type: data.type });
-     toast(" ✅ Project created successfully!",{
-      className:"toast",
-      unstyled: true,
+ toast("  Project created successfully!",{
+  className:"toast",
+  unstyled: true,
+  icon: <CheckCircle className="text-green-500 w-5 h-5" />,
+});
 
-     });
-       // ✅ fixed
-      onOpenChange(false);
+  // ✅ fixed
+  onOpenChange(false);
     } catch (err) {
-      toast.error("Failed to create project");
+      toast("  Project cant be created!",{
+  className:"toast",
+  unstyled: true,
+  icon: <XCircle className="text-green-500 w-5 h-5" />,
+});
     }
   };
 

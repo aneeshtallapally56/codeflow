@@ -170,7 +170,10 @@ html, body {
     min-width: fit-content;
     max-width: fit-content;
     animation: 0.35s cubic-bezier(0.21, 1.02, 0.73, 1) 0s 1 normal forwards running go3223188581;
-    display: flex;
+    display:flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
     padding: 10px 10px;
 }
 
