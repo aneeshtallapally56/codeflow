@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { useEditorSocketStore } from "@/lib/store/editorSocketStore";
 import { useTreeStructureStore } from "@/lib/store/treeStructureStore";
-import { InputModalBody } from "@/components/molecules/InputModal/InputModalBody";
+import { InputModalBody } from "@/components/molecules/Modals/InputModalBody/InputModalBody";
 
 type TreeNodeProps = {
   fileFolderData: {

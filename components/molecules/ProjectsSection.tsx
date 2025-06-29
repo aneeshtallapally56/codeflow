@@ -1,14 +1,15 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 
 import { Button } from "../ui/button";
 
 import { ProjectCard } from "../organisms/ProjectCard/ProjectCard";
-import axios from "axios";
-import { InputModal } from "./InputModal/InputModal";
+
+import  {InputModal}  from "./Modals/InputModal/InputModal";
 import { useDeleteProject } from "@/hooks/api/mutations/useDeleteProject";
-import { useCreateProject } from "@/hooks/api/mutations/useCreateProject";
 import { useProjects } from "@/hooks/api/queries/useProjects";
+import { useJoinProject } from "@/hooks/api/mutations/useJoinProject";
+import { JoinModal } from "./Modals/JoinModal/JoinModal";
 interface Project {
   _id: string;
   title: string;
@@ -16,7 +17,7 @@ interface Project {
     _id: string;
     username: string;
   };
-  collaborators: {
+  members: {
     _id: string;
     username: string;
   }[];
@@ -25,45 +26,34 @@ interface Project {
 }
 
 export default function ProjectsSection() {
- const { deleteProjectMutation } = useDeleteProject();
- const {createProjectMutation } = useCreateProject();
- const {isLoading,isError,projects} = useProjects();
+  const { deleteProjectMutation } = useDeleteProject();
 
- const [inputModalOpen, setInputModalOpen] = useState(false);
+  const { isLoading, isError, projects } = useProjects();
+  const { joinProjectMutation, isPending, isSuccess } = useJoinProject();
+  const [inputModalOpen, setInputModalOpen] = useState(false);
+ const [joinModalOpen, setJoinModalOpen] = useState(false);
 
- if (isLoading) return <p className="text-white">Loading projects...</p>;
- if (isError) return <p className="text-red-500">Error fetching projects.</p>;
+  if (isLoading) return <p className="text-white">Loading projects...</p>;
+  if (isError) return <p className="text-red-500">Error fetching projects.</p>;
 
   const handleInputModal = () => {
     setInputModalOpen((prev) => !prev);
   };
-  const handleDeleteProject = async (projectId:string) => {
+  const handleDeleteProject = async (projectId: string) => {
     try {
       await deleteProjectMutation(projectId); // pass the project ID
-
     } catch (error) {
       console.error("Failed to delete project:", error);
     }
   };
 
-const handleCreateProject = async (name: string) => {
-        try {
-            await createProjectMutation({ title: name }); // pass the project
-        } catch (error) {
-            console.error('Error creating project:', error);
-        }
-   }
-
- 
- 
 
   return (
     <main className="w-full h-screen overflow-y-auto bg-[#050505] min-h-screen">
-      {inputModalOpen && <InputModal
-  open={inputModalOpen}
-  onCreate={handleCreateProject}
-  onClose={() => setInputModalOpen(false)}
-/>}
+        <InputModal
+        open={inputModalOpen} onOpenChange={setInputModalOpen}
+        />
+      <JoinModal  open={joinModalOpen} onOpenChange={setJoinModalOpen} />
       <div className="w-full px-4 md:px-12 py-10">
         <div className="w-full flex justify-between items-center flex-wrap gap-4">
           <h1 className="text-2xl text-zinc-300 font-bold tracking-tight">
@@ -72,12 +62,13 @@ const handleCreateProject = async (name: string) => {
           <div className="flex gap-2">
             <Button
               variant="outline"
+              onClick={() => setJoinModalOpen(true)} 
               className="border border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-white"
             >
               Join
             </Button>
             <Button
-            onClick={handleInputModal}
+              onClick={handleInputModal}
               variant="default"
               className=" 
          text-white 
@@ -92,14 +83,14 @@ const handleCreateProject = async (name: string) => {
         </div>
 
         <div className="mt-8 flex gap-6 flex-wrap">
-          {projects.map((project:Project) => (
+          {projects.map((project: Project) => (
             <ProjectCard
               onDelete={handleDeleteProject}
               key={project._id}
               title={project.title}
               createdAt={project.createdAt}
               projectId={project._id}
-              collaborators={project.collaborators}
+              members={project.members}
               user={project.user}
             />
           ))}

@@ -1,6 +1,7 @@
 import axiosInstance from '../config/axios-config';
 type CreateProjectPayload = {
-  title: string;        
+  title: string; 
+  type:string       
 };
 type GetProjectTreePayload = {
   projectId: string;
@@ -55,3 +56,30 @@ try {
         throw error;
       }
   }
+
+  export const getProjectById = async (projectId: string) => {
+    try {
+      const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+      const endpoint = `${BASE_URL}/api/v1/project/${projectId}`;
+      const res = await axiosInstance.get(endpoint);
+      console.log("Project fetched:", res.data);
+      return res.data.project;
+    } catch (error) {
+      console.error("Error fetching project by ID:", error);
+      throw error;
+    }
+  }
+
+  export const joinProject = async (projectId: string) => {
+  try {
+     const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+       const endpoint = `${BASE_URL}/api/v1/projects/join`;
+         const res = await axiosInstance.post(endpoint, { projectId });
+    console.log("Project joined:", res.data);
+
+  } catch (error) {
+      console.error("Error fetching project by ID:", error);
+      throw error;
+  }
+
+};

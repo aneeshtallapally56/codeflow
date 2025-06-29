@@ -16,7 +16,7 @@ interface InputModalBodyProps {
 export const InputModalBody = ({
   type,
   onCreate,
-  onCancel,
+
 }: InputModalBodyProps) => {
   const [name, setName] = useState("");
 

@@ -1,14 +1,14 @@
 import { Code, Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import Link from "next/link";
-import axios from "axios";
+
 
 
 interface ProjectCardProps {
   title: string;
   createdAt: string;
   projectId: string;
-  collaborators: {
+  members: {
     _id: string;
     username: string;
   }[];
@@ -23,12 +23,12 @@ export const ProjectCard = ({
   title,
   createdAt,
   user,
-  collaborators,
+  members,
  projectId,
   onDelete
 }: ProjectCardProps) => {
  const formattedDate = new Date(createdAt).toDateString();
- console.log(title, createdAt, user, collaborators);
+ console.log(title, createdAt, user, members);
 
   
   return (
@@ -50,7 +50,7 @@ export const ProjectCard = ({
       <span className="text-zinc-400 mb-2 pt-2 inline-block">members:</span>
       <div className="flex -space-x-2">
         <div className="*:data-[slot=avatar]:ring-background flex -space-x-2 *:data-[slot=avatar]:ring-2">
-          {collaborators.map((collabId, index) => (
+          {members.map((collabId, index) => (
                 <>
               <Avatar key={index} className="w-[40px] h-[40px]  ">
                  <AvatarFallback className="bg-[#050505] text-white text-sm  ">{collabId.username?.slice(0, 2).toUpperCase()}</AvatarFallback>

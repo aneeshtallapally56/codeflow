@@ -42,8 +42,9 @@ export const useTreeStructureStore = create<TreeStructureStore>((set, get) => ({
       console.log(' Tree Structure fetched:', data);
       // Optional: Validate or fix missing 'type' fields
       set({ treeStructure: data });
-    } catch (error) {
+    } catch (error:any) {
       console.error('❌Failed to fetch tree structure:', error);
+      throw error;
     }
   },
   joinProjectRoom: (projectId) => {
