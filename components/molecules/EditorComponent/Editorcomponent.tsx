@@ -10,23 +10,21 @@ import { useUserStore } from '@/lib/store/userStore';
 export default function Editorcomponent() {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const previousPathRef = useRef<string | null>(null);
+  const hasRequestedLockRef = useRef(false); 
+
   const [isLockingFile, setIsLockingFile] = useState(false);
   const [lockError, setLockError] = useState<string | null>(null);
 
-  const {
-    editorSocket,
-    emitJoinFileRoom,
-    emitLeaveFileRoom,
-    emitSocketEvent,// Assuming you store current user ID in the socket store
-  } = useEditorSocketStore();
-  const {userId} = useUserStore();
+  // Global stores
+  const { editorSocket, emitJoinFileRoom, emitLeaveFileRoom, emitSocketEvent } = useEditorSocketStore();
+  const { userId } = useUserStore();
   const { activeFileTab } = useActiveFileTabStore();
-  const { 
-    isLocked, 
-    lockedByUser, 
-    addLock, 
-    removeLock 
-  } = useFileLockStore();
+  const { isLocked, lockedByUser, addLock, removeLock } = useFileLockStore();
+
+  const currentFilePath = activeFileTab?.path;
+  const isCurrentFileLocked = currentFilePath ? isLocked(currentFilePath) : false;
+  const isLockedByCurrentUser = currentFilePath ? lockedByUser(currentFilePath, userId) : false;
+  const canEdit = !isCurrentFileLocked || isLockedByCurrentUser;
 
   const extractProjectId = (fullPath: string) => {
     const segments = fullPath.split('/');
@@ -34,35 +32,27 @@ export default function Editorcomponent() {
     return index !== -1 && segments[index + 1] ? segments[index + 1] : '';
   };
 
-  // Check if current file is locked and by whom
-  const currentFilePath = activeFileTab?.path;
-  const isCurrentFileLocked = currentFilePath ? isLocked(currentFilePath) : false;
-  const isLockedByCurrentUser = currentFilePath ? lockedByUser(currentFilePath, userId) : false;
-  const canEdit = !isCurrentFileLocked || isLockedByCurrentUser;
-
-  // Setup socket listeners for file locking events
+  // 🔒 Set up socket listeners
   useEffect(() => {
     if (!editorSocket) return;
 
-    const handleFileLocked = ({ userId, username, filePath }: any) => {
-      addLock({ path: filePath, lockedBy: userId });
-      if (filePath === currentFilePath && userId !== userId) {
+    const handleFileLocked = ({ userId: lockerId, username, filePath }: any) => {
+      addLock({ path: filePath, lockedBy: lockerId });
+      if (filePath === currentFilePath && lockerId !== userId) {
         setLockError(`File is being edited by ${username}`);
       }
     };
 
-    const handleFileLockedByOther = ({ userId, username }: any) => {
+    const handleFileLockedByOther = ({ userId: lockerId, username }: any) => {
       if (currentFilePath) {
-        addLock({ path: currentFilePath, lockedBy: userId });
+        addLock({ path: currentFilePath, lockedBy: lockerId });
         setLockError(`File is being edited by ${username}`);
       }
     };
 
     const handleFileUnlocked = ({ filePath }: any) => {
       removeLock(filePath);
-      if (filePath === currentFilePath) {
-        setLockError(null);
-      }
+      if (filePath === currentFilePath) setLockError(null);
     };
 
     editorSocket.on('fileLocked', handleFileLocked);
@@ -76,147 +66,107 @@ export default function Editorcomponent() {
     };
   }, [editorSocket, currentFilePath, addLock, removeLock, userId]);
 
-  // Handle file switching and locking
+  // 📁 Handle file switching
   useEffect(() => {
     const newPath = activeFileTab?.path;
     const oldPath = previousPathRef.current;
+    hasRequestedLockRef.current = false;
 
     if (editorSocket && newPath && newPath !== oldPath) {
       const projectId = extractProjectId(newPath);
-      
-      // Leave old file room and unlock if we were editing
+
       if (oldPath) {
-        emitLeaveFileRoom(projectId, oldPath);
+        const oldProjectId = extractProjectId(oldPath);
+        emitLeaveFileRoom(oldProjectId, oldPath);
         if (lockedByUser(oldPath, userId)) {
-          emitSocketEvent('unlockFile', { 
-            projectId: extractProjectId(oldPath), 
-            filePath: oldPath 
-          });
+          emitSocketEvent('unlockFile', { projectId: oldProjectId, filePath: oldPath });
         }
       }
 
-      // Join new file room
       emitJoinFileRoom(projectId, newPath);
-      
-      // Try to lock the new file
-      if (newPath) {
-        setIsLockingFile(true);
-        setLockError(null);
-        emitSocketEvent('lockFile', { 
-          projectId, 
-          filePath: newPath 
-        });
-        
-        // Clear locking state after a short delay
-        setTimeout(() => setIsLockingFile(false), 500);
-      }
+      setIsLockingFile(true);
+      setLockError(null);
+      emitSocketEvent('lockFile', { projectId, filePath: newPath });
+      hasRequestedLockRef.current = true;
+      setTimeout(() => setIsLockingFile(false), 500);
 
       previousPathRef.current = newPath;
     }
-  }, [activeFileTab?.path, editorSocket, emitJoinFileRoom, emitLeaveFileRoom, emitSocketEvent, lockedByUser, userId]);
+  }, [activeFileTab?.path]);
 
-  // Handle editor content changes
-  function handleChange(value: string | undefined) {
-    // Don't save if file is locked by another user
-    if (!canEdit) {
-      return;
-    }
+  const handleChange = (value: string | undefined) => {
+    if (!canEdit || !editorSocket) return;
 
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
-      const editorContent = value;
       const filePath = activeFileTab?.path;
       const projectId = filePath ? extractProjectId(filePath) : '';
-
-      if (filePath && projectId && canEdit) {
+      if (filePath && projectId) {
         emitSocketEvent('writeFile', {
-          data: editorContent,
+          data: value,
           pathToFileOrFolder: filePath,
           projectId,
         });
       }
     }, 2000);
-  }
+  };
 
-  // Handle editor focus - try to lock file when user starts editing
   const handleEditorFocus = () => {
-    if (currentFilePath && !isLockedByCurrentUser && !isLockingFile) {
+    if (currentFilePath && !isLockedByCurrentUser && !isLockingFile && !hasRequestedLockRef.current) {
       const projectId = extractProjectId(currentFilePath);
       setIsLockingFile(true);
-      emitSocketEvent('lockFile', { 
-        projectId, 
-        filePath: currentFilePath 
-      });
+      emitSocketEvent('lockFile', { projectId, filePath: currentFilePath });
+      hasRequestedLockRef.current = true;
       setTimeout(() => setIsLockingFile(false), 500);
     }
   };
 
-  // Handle manual unlock (optional - for releasing lock without switching files)
   const handleUnlockFile = () => {
     if (currentFilePath && isLockedByCurrentUser) {
       const projectId = extractProjectId(currentFilePath);
-      emitSocketEvent('unlockFile', { 
-        projectId, 
-        filePath: currentFilePath 
-      });
+      emitSocketEvent('unlockFile', { projectId, filePath: currentFilePath });
     }
   };
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
-      
-      // Unlock file if we're leaving the component
       if (currentFilePath && isLockedByCurrentUser && editorSocket) {
         const projectId = extractProjectId(currentFilePath);
-        emitSocketEvent('unlockFile', { 
-          projectId, 
-          filePath: currentFilePath 
-        });
+        emitSocketEvent('unlockFile', { projectId, filePath: currentFilePath });
       }
     };
   }, []);
 
   const getLanguage = (extension: string) => {
     const languageMap: Record<string, string> = {
-      '.js': 'javascript',
-      '.ts': 'typescript',
-      '.jsx': 'javascript',
-      '.tsx': 'typescript',
-      '.py': 'python',
-      '.html': 'html',
-      '.css': 'css',
-      '.json': 'json',
+      '.js': 'javascript', '.ts': 'typescript', '.jsx': 'javascript',
+      '.tsx': 'typescript', '.py': 'python', '.html': 'html',
+      '.css': 'css', '.json': 'json',
     };
     return languageMap[extension] || 'plaintext';
   };
 
   return (
     <div className="relative">
-      {/* Lock status indicator */}
       {isCurrentFileLocked && (
-        <div className={`absolute top-2 right-2 z-10 px-3 py-1 rounded text-sm ${
-          isLockedByCurrentUser 
-            ? 'bg-green-100 text-green-800 border border-green-300' 
-            : 'bg-red-100 text-red-800 border border-red-300'
-        }`}>
+        <div className={`absolute top-2 right-2 px-3 py-1 text-sm rounded z-10 ${
+          isLockedByCurrentUser ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}
+        `}>
           {isLockedByCurrentUser ? '🔒 Editing' : '🔒 Locked'}
         </div>
       )}
 
-      {/* Lock error message */}
       {lockError && (
-        <div className="absolute top-12 right-2 z-10 px-3 py-2 bg-yellow-100 text-yellow-800 border border-yellow-300 rounded text-sm max-w-xs">
+        <div className="absolute top-12 right-2 bg-yellow-100 text-yellow-800 px-3 py-2 rounded z-10 text-sm border border-yellow-300 max-w-xs">
           {lockError}
         </div>
       )}
 
-      {/* Unlock button (optional) */}
       {isLockedByCurrentUser && (
         <button
           onClick={handleUnlockFile}
-          className="absolute top-2 right-20 z-10 px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600"
+          className="absolute top-2 right-20 bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 text-xs rounded z-10"
         >
           Release Lock
         </button>
@@ -226,11 +176,7 @@ export default function Editorcomponent() {
         height="70vh"
         width="100%"
         theme="vs-dark"
-        language={
-          activeFileTab?.extension
-            ? getLanguage(activeFileTab.extension)
-            : 'javascript'
-        }
+        language={getLanguage(activeFileTab?.extension || '')}
         value={activeFileTab?.value || '// No file selected'}
         onChange={handleChange}
         onMount={(editor) => {
@@ -242,22 +188,12 @@ export default function Editorcomponent() {
           minimap: { enabled: false },
           automaticLayout: true,
           readOnly: !activeFileTab || !canEdit,
-          // Visual indicator for read-only state
-          ...((!activeFileTab || !canEdit) && {
-            theme: 'vs-dark',
-            scrollbar: {
-              alwaysConsumeMouseWheel: false,
-            },
-          }),
         }}
       />
 
-      {/* Loading indicator */}
       {isLockingFile && (
-        <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center">
-          <div className="bg-white px-4 py-2 rounded shadow">
-            Requesting edit access...
-          </div>
+        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20">
+          <div className="bg-white px-4 py-2 rounded shadow">Requesting edit access...</div>
         </div>
       )}
     </div>
