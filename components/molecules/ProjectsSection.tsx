@@ -10,6 +10,7 @@ import { useDeleteProject } from "@/hooks/api/mutations/useDeleteProject";
 import { useProjects } from "@/hooks/api/queries/useProjects";
 import { useJoinProject } from "@/hooks/api/mutations/useJoinProject";
 import { JoinModal } from "./Modals/JoinModal/JoinModal";
+import { UserInitializer } from "../templates/UserInitializer";
 interface Project {
   _id: string;
   title: string;
@@ -48,8 +49,10 @@ export default function ProjectsSection() {
   };
 
 
+
   return (
     <main className="w-full h-screen overflow-y-auto bg-[#050505] min-h-screen">
+
         <InputModal
         open={inputModalOpen} onOpenChange={setInputModalOpen}
         />

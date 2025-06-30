@@ -1,20 +1,21 @@
 "use client";
 
 import { useRoomMembersStore } from "@/lib/store/roomMembersStore";
+import { useUserStore } from "@/lib/store/userStore";
 
 
 export const CollaboratorPanel = () => {
   const liveUsers = useRoomMembersStore((s) => s.liveUsers);
-
+  const userId = useUserStore((s) => s.userId);
+  console.log("User ID in store:", userId);
   return (
-    <div className="flex gap-2 items-center p-2">
-      {liveUsers.map((user) =>
-  user.userId? (
-    <div key={user.userId} className="badge">
-      {user.username}
-    </div>
-  ) : null
-)}
-    </div>
+    <ul>
+    {liveUsers.map((user) => (
+      <li key={user.socketId}>
+        {user.username} {user.userId === userId ? "(you)" : ""}
+      </li>
+    ))}
+  </ul>
+
   );
 };
