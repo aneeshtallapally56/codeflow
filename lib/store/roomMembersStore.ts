@@ -1,4 +1,3 @@
-
 import { create } from 'zustand';
 
 type LiveUser = {
@@ -16,13 +15,23 @@ type State = {
 
 export const useRoomMembersStore = create<State>((set) => ({
   liveUsers: [],
+
   setLiveUsers: (users) => {
-    set({ liveUsers: users })
+
+    const map = new Map<string, LiveUser>();
+    for (const user of users) {
+      map.set(user.userId, user); 
+    }
+    set({ liveUsers: Array.from(map.values()) });
   },
+
   addLiveUser: (user) =>
-    set((state) => ({
-      liveUsers: [...state.liveUsers.filter(u => u.socketId !== user.socketId), user],
-    })),
+    set((state) => {
+      const exists = state.liveUsers.some((u) => u.userId === user.userId);
+      if (exists) return state;
+      return { liveUsers: [...state.liveUsers, user] };
+    }),
+
   removeLiveUser: (socketId) =>
     set((state) => ({
       liveUsers: state.liveUsers.filter((u) => u.socketId !== socketId),
