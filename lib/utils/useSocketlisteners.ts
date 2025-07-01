@@ -10,6 +10,7 @@ import { useEditorTabStore } from "../store/editorTabStores";
 import{useProjectRoomMembersStore } from "../store/projectRoomMemberStore";
 import { useUserStore } from "../store/userStore";
 import { useFileLockStore } from "../store/fileLockStore";
+import { useFileRoomMembersStore } from "../store/fileRoomMemberStore";
 
 // Standardized event payload types
 interface FileLockEvent {
@@ -192,7 +193,7 @@ export const useSocketListeners = () => {
   useEffect(() => {
     if (!editorSocket || !userId) return;
 
-    const handleUserJoined = (user: UserPresenceEvent) => {
+    const handleUserJoinedProject = (user: UserPresenceEvent) => {
       console.log("👥 User joined project:", user);
       const isCurrentUser = user.userId === userId;
       useProjectRoomMembersStore.getState(). addProjectRoomUser(user);
@@ -204,7 +205,7 @@ export const useSocketListeners = () => {
       }
     };
 
-    const handleUserLeft = (data: { 
+    const handleUserLeftProject = (data: { 
       userId: string; 
       socketId: string;
       username?: string;
@@ -227,15 +228,53 @@ export const useSocketListeners = () => {
       });
     };
 
+    const handleUserJoinedFile = (user: UserPresenceEvent)=>{
+      console.log("👥 User joined file:", user);
+      const isCurrentUser = user.userId === userId;
+      useFileRoomMembersStore.getState(). addFileRoomUser(user);
+
+      if (isCurrentUser) {
+        toast.success("You joined the file");
+      } else {
+        toast(`${user.username} joined the file`);
+      }
+    }
+
+    const handleUserLeftFile =(data: { 
+      userId: string; 
+      socketId: string;
+      username?: string;
+    })=>{
+      console.log("👥 User left file:", data);
+      useFileRoomMembersStore.getState(). removeFileRoomUser(data.socketId);
+
+      if (data.userId !== userId) {
+        const username = data.username || data.userId;
+        toast(`${username} left the file`);
+      }
+    }
+    const handleInitialFileUsers = (users: Array<UserPresenceEvent>) => {
+      console.log("👥 Initial users in file:", users);
+      // Set initial user presence
+      users.forEach(user => {
+        useFileRoomMembersStore.getState(). addFileRoomUser(user);
+      });
+    }
     // Register user-dependent listeners
-    editorSocket.on("userJoinedProject", handleUserJoined);
-    editorSocket.on("userLeftProject", handleUserLeft);
+    editorSocket.on("userJoinedProject", handleUserJoinedProject);
+    editorSocket.on("userLeftProject", handleUserLeftProject);
     editorSocket.on("initialUsers", handleInitialUsers);
+     editorSocket.on("userJoinedFile", handleUserJoinedFile);
+    editorSocket.on("userLeftFile", handleUserLeftFile);
+    editorSocket.on("initialFileUsers", handleInitialFileUsers);
 
     return () => {
-      editorSocket.off("userJoinedProject", handleUserJoined);
-      editorSocket.off("userLeftProject", handleUserLeft);
+      editorSocket.off("userJoinedProject", handleUserJoinedProject);
+      editorSocket.off("userLeftProject", handleUserLeftProject);
       editorSocket.off("initialUsers", handleInitialUsers);
+       editorSocket.off("userJoinedFile", handleUserJoinedFile);
+    editorSocket.off("userLeftFile", handleUserLeftFile);
+    editorSocket.off("initialFileUsers", handleInitialFileUsers);
     };
   }, [editorSocket, userId]);
 };

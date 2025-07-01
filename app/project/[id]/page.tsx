@@ -7,14 +7,15 @@ import { toast } from "sonner";
 
 import Editorcomponent from "@/components/molecules/EditorComponent/Editorcomponent";
 import { TopBar } from "@/components/organisms/TopBar";
-import { CollaboratorPanel } from "@/components/molecules/CollabPanel/CollaboratorPanel";
+
 import EditorTabs from "@/components/atoms/EditorTabs";
 
 import { useEditorSocketStore } from "@/lib/store/editorSocketStore";
 import { useTreeStructureStore } from "@/lib/store/treeStructureStore";
 import { connectEditorSocket } from "@/lib/socket/editorSocketClient";
 import { useSocketListeners } from "@/lib/utils/useSocketlisteners";
-import { useRoomMembersStore } from "@/lib/store/roomMembersStore";
+import { useProjectRoomMembersStore } from "@/lib/store/projectRoomMemberStore";
+import { useFileRoomMembersStore } from "@/lib/store/fileRoomMemberStore";
 import PresencePanel from "@/components/organisms/PresencePanel/PresencePanel";
 import { CollaboratorButton } from "@/components/atoms/CollabButton/CollabButton";
 
@@ -67,7 +68,10 @@ const handleForbidden = React.useCallback(
     const socket = connectEditorSocket(projectId);
 
     socket.on("initialUsers", (users) => {
-      useRoomMembersStore.getState().setLiveUsers(users);
+      useProjectRoomMembersStore.getState().setProjectRoomUsers(users);
+    });
+     socket.on("initialFileUsers", (users) => {
+useFileRoomMembersStore.getState().setFileRoomUsers(users);
     });
 
     socket.on("connect", () => {
@@ -119,7 +123,7 @@ const handleForbidden = React.useCallback(
         <PresencePanel />
         </div>
       </div>
-    <CollaboratorButton />x
+    <CollaboratorButton />
     </div>
   );
 }

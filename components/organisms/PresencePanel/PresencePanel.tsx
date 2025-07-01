@@ -1,6 +1,9 @@
 import { PlusCircleIcon } from "lucide-react";
-
+import { useFileRoomMembersStore } from "@/lib/store/fileRoomMemberStore";
+import { useProjectRoomMembersStore } from "@/lib/store/projectRoomMemberStore";
 export default function CollaboratorPanel() {
+    const { fileRoomUsers } = useFileRoomMembersStore();
+    const { projectRoomUsers } = useProjectRoomMembersStore();
   return (
     <div className="fixed bottom-8 right-4 w-[300px] md:w-80 h-[80vh] bg-[#202020] border border-zinc-700 rounded shadow-lg z-[99] p-4 text-zinc-100">
       {/* Header */}
@@ -17,22 +20,27 @@ export default function CollaboratorPanel() {
       {/* Current Collaborators */}
       <div className="text-sm text-zinc-300 capitalize mt-3">file members</div>
       <div className="flex flex-col gap-1 pt-3 h-40 md:h-44 overflow-y-auto">
-        <UserCard name="Aneesh T (you)" imageUrl="https://lh3.googleusercontent.com/a/ACg8ocInqdDced1qzbOrtgEKc01Qdj94xXFkdB_6oXnjZB69_FJFjZsy=s96-c" />
+        {fileRoomUsers.map((user) => (
+          <UserCard
+            key={user.userId}
+            name={user.username}
+            imageUrl={`https://i.pravatar.cc/${user.userId}`}
+          />
+          
+        ))}
       </div>
 
       {/* Other Members */}
       <div className="text-sm text-zinc-300 capitalize mt-3">project members</div>
       <div className="flex flex-col gap-1 pt-3 h-24 md:h-44 overflow-y-auto">
-        <UserCard
-          name="aneesh t (you)"
-          imageUrl="https://lh3.googleusercontent.com/a/ACg8ocInqdDced1qzbOrtgEKc01Qdj94xXFkdB_6oXnjZB69_FJFjZsy=s96-c"
-          inactive
-        />
-        <UserCard
-          name="tallapally aneesh"
-          imageUrl="https://lh3.googleusercontent.com/a/ACg8ocLwskmWovKN01q9yQMrQeoXtWaPB9YPZ8XgSVTAHV4RkujFnw=s96-c"
-          inactive
-        />
+        {projectRoomUsers.map((user) => (
+          <UserCard
+            key={user.userId}
+            name={user.username}
+           imageUrl={`https://i.pravatar.cc/${user.userId}`}
+          
+          />
+        ))}
       </div>
     </div>
   );
