@@ -11,6 +11,36 @@ import { useRoomMembersStore } from "../store/roomMembersStore";
 import { useUserStore } from "../store/userStore";
 import { useFileLockStore } from "../store/fileLockStore";
 
+// Standardized event payload types
+interface FileLockEvent {
+  userId: string;
+  username: string;
+  filePath: string;
+  requestId?: string;
+}
+
+interface FileOperationEvent {
+  filePath: string;
+  projectId?: string;
+}
+
+interface UserPresenceEvent {
+  userId: string;
+  username: string;
+  socketId: string;
+}
+
+interface FileReadEvent {
+  filePath: string;
+  value: string;
+  extension: string;
+}
+
+interface FileWriteEvent {
+  filePath: string;
+  data?: string;
+}
+
 export const useSocketListeners = () => {
   const { editorSocket } = useEditorSocketStore();
   const { setActiveFileTab } = useActiveFileTabStore();
@@ -28,56 +58,52 @@ export const useSocketListeners = () => {
     initialized.current = true;
 
     // File read/write operations
-    const handleReadFileSuccess = (data: {
-      path: string;
-      value: string;
-      extension: string;
-    }) => {
+    const handleReadFileSuccess = (data: FileReadEvent) => {
       console.log("✅ readFileSuccess:", data);
       const fileTab = {
-        path: data.path,
-        name: path.basename(data.path),
+        path: data.filePath,
+        name: path.basename(data.filePath),
         content: data.value,
         extension: data.extension,
       };
       openFile(fileTab);
       setActiveFileTab({
-        path: data.path,
+        path: data.filePath,
         value: data.value,
         extension: data.extension,
       });
     };
 
-    const handleWriteFileSuccess = (data: { path: string }) => {
+    const handleWriteFileSuccess = (data: FileWriteEvent) => {
       console.log("✅ File written successfully:", data);
       editorSocket.emit("readFile", {
-        pathToFileOrFolder: data.path,
+        filePath: data.filePath,
       });
     };
 
     // File system events (real-time updates)
-    const handleFileCreated = (data: { path: string }) => {
-      console.log("🆕 fileCreated broadcast:", data.path);
+    const handleFileCreated = (data: FileOperationEvent) => {
+      console.log("🆕 fileCreated broadcast:", data.filePath);
       setTreeStructure();
     };
 
-    const handleFileDeleted = (data: { path: string }) => {
-      console.log("🗑️ fileDeleted broadcast:", data.path);
+    const handleFileDeleted = (data: FileOperationEvent) => {
+      console.log("🗑️ fileDeleted broadcast:", data.filePath);
       setTreeStructure();
       // Remove any locks for the deleted file
-      removeLock(data.path);
+      removeLock(data.filePath);
     };
 
-    const handleFolderCreated = (data: { path: string }) => {
-      console.log("📁 folderCreated broadcast:", data.path);
+    const handleFolderCreated = (data: FileOperationEvent) => {
+      console.log("📁 folderCreated broadcast:", data.filePath);
       setTreeStructure();
     };
 
-    const handleFolderDeleted = (data: { path: string }) => {
-      console.log("📁 folderDeleted broadcast:", data.path);
+    const handleFolderDeleted = (data: FileOperationEvent) => {
+      console.log("📁 folderDeleted broadcast:", data.filePath);
       setTreeStructure();
-      // Remove locks for files in the deleted folder would need more complex logic
-      // You might want to implement a method to remove locks by path prefix
+      // Remove locks for files in the deleted folder
+      // TODO: Implement removeLocksWithPrefix method if needed
     };
 
     const handleDeleteFileSuccess = () => {
@@ -88,23 +114,21 @@ export const useSocketListeners = () => {
       setTreeStructure();
     };
 
-    // File locking events
-    const handleFileLocked = (data: { 
-      pathToFile: string; 
-      lockedBy: string;
-      userId?: string;
-      username?: string;
-    }) => {
-      console.log("🔒 fileLocked broadcast:", data.pathToFile, "by", data.lockedBy);
-      addLock({ 
-        path: data.pathToFile, 
-        lockedBy: data.lockedBy 
-      });
+    // File locking events - Store management only (UI handled in EditorComponent)
+    const handleFileLocked = (data: FileLockEvent) => {
+      console.log("🔒 fileLocked store update:", data.filePath, "by", data.userId);
+      
+      if (data.filePath && data.userId) {
+        addLock({ 
+          path: data.filePath, 
+          lockedBy: data.userId 
+        });
+      }
     };
 
-    const handleFileUnlocked = (data: { pathToFile: string }) => {
-      console.log("🔓 fileUnlocked broadcast:", data.pathToFile);
-      removeLock(data.pathToFile);
+    const handleFileUnlocked = (data: FileOperationEvent) => {
+      console.log("🔓 fileUnlocked store update:", data.filePath);
+      removeLock(data.filePath);
     };
 
     // Error handling
@@ -113,9 +137,11 @@ export const useSocketListeners = () => {
       toast.error(`Error: ${data.data}`);
     };
 
-    // Debug listener for all events
+    // Debug listener for all events (development only)
     const handleAnyEvent = (event: string, ...args: any[]) => {
-      console.log("📡 Received socket event:", event, args);
+      if (process.env.NODE_ENV === 'development') {
+        console.log("📡 Received socket event:", event, args);
+      }
     };
 
     // Register all common listeners
@@ -127,10 +153,17 @@ export const useSocketListeners = () => {
     editorSocket.on("folderDeleted", handleFolderDeleted);
     editorSocket.on("fileCreated", handleFileCreated);
     editorSocket.on("folderCreated", handleFolderCreated);
+    
+    // File locking - Store updates only (no UI logic)
     editorSocket.on("fileLocked", handleFileLocked);
     editorSocket.on("fileUnlocked", handleFileUnlocked);
+    
     editorSocket.on("error", handleError);
-    editorSocket.onAny(handleAnyEvent);
+    
+    // Only add debug listener in development
+    if (process.env.NODE_ENV === 'development') {
+      editorSocket.onAny(handleAnyEvent);
+    }
 
     // 🧼 Cleanup on unmount
     return () => {
@@ -145,7 +178,10 @@ export const useSocketListeners = () => {
       editorSocket.off("fileLocked", handleFileLocked);
       editorSocket.off("fileUnlocked", handleFileUnlocked);
       editorSocket.off("error", handleError);
-      editorSocket.offAny(handleAnyEvent);
+      
+      if (process.env.NODE_ENV === 'development') {
+        editorSocket.offAny(handleAnyEvent);
+      }
     };
   }, [editorSocket, openFile, setActiveFileTab, setTreeStructure, addLock, removeLock]);
 
@@ -153,11 +189,7 @@ export const useSocketListeners = () => {
   useEffect(() => {
     if (!editorSocket || !userId) return;
 
-    const handleUserJoined = (user: {
-      userId: string;
-      username: string;
-      socketId: string;
-    }) => {
+    const handleUserJoined = (user: UserPresenceEvent) => {
       console.log("👥 User joined project:", user);
       const isCurrentUser = user.userId === userId;
       useRoomMembersStore.getState().addLiveUser(user);
@@ -183,11 +215,7 @@ export const useSocketListeners = () => {
       }
     };
 
-    const handleInitialUsers = (users: Array<{ 
-      userId: string; 
-      username: string;
-      socketId: string;
-    }>) => {
+    const handleInitialUsers = (users: Array<UserPresenceEvent>) => {
       console.log("👥 Initial users in project:", users);
       // Set initial user presence
       users.forEach(user => {
@@ -195,26 +223,15 @@ export const useSocketListeners = () => {
       });
     };
 
-    const handleFileLockedByOther = (data: { 
-      userId: string; 
-      username: string;
-      filePath?: string;
-    }) => {
-      console.log("🔒 File already locked by other user:", data);
-      toast.warning(`File is already being edited by ${data.username}`);
-    };
-
     // Register user-dependent listeners
     editorSocket.on("userJoined", handleUserJoined);
     editorSocket.on("userLeft", handleUserLeft);
     editorSocket.on("initialUsers", handleInitialUsers);
-    editorSocket.on("fileLockedByOther", handleFileLockedByOther);
 
     return () => {
       editorSocket.off("userJoined", handleUserJoined);
       editorSocket.off("userLeft", handleUserLeft);
       editorSocket.off("initialUsers", handleInitialUsers);
-      editorSocket.off("fileLockedByOther", handleFileLockedByOther);
     };
   }, [editorSocket, userId]);
 };

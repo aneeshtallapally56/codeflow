@@ -42,7 +42,7 @@ export const TreeNode = ({ fileFolderData }: TreeNodeProps) => {
 
   const handleDoubleClick = () => {
     emitSocketEvent("readFile", {
-      pathToFileOrFolder: fileFolderData.path,
+      filePath: fileFolderData.path,
     });
     
   };

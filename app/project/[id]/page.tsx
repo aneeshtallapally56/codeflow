@@ -15,6 +15,7 @@ import { useTreeStructureStore } from "@/lib/store/treeStructureStore";
 import { connectEditorSocket } from "@/lib/socket/editorSocketClient";
 import { useSocketListeners } from "@/lib/utils/useSocketlisteners";
 import { useRoomMembersStore } from "@/lib/store/roomMembersStore";
+import { Editor } from "@monaco-editor/react";
 
 export default function Page() {
 
@@ -105,16 +106,18 @@ const handleForbidden = React.useCallback(
 }
   return (
     <div className="w-full h-full bg-[#121212] flex flex-col md:px-16 px-4 py-6 min-w-0">
-      <div className="h-full w-full flex flex-col min-w-0 overflow-hidden">
-        <TopBar />
+      
+        {/* <TopBar /> /*}
+        // <EditorTabs /> 
+        {/* <div className="flex-1 min-h-0 overflow-hidden"> */}
         <EditorTabs />
-        <div className="flex-1 min-h-0 overflow-hidden">
-          <Editorcomponent />
-        </div>
-        <div className="mt-4">
+        <div className="mt-4"><Editorcomponent /></div>
+          
+       
+     
           <CollaboratorPanel />
-        </div>
+        
       </div>
-    </div>
+
   );
 }
