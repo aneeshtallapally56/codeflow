@@ -124,6 +124,9 @@ export const useSocketListeners = () => {
           lockedBy: data.userId 
         });
       }
+       if (data.userId !== userId) {
+          toast(`${data.username} started editing ${path.basename(data.filePath)}`);
+        }
     };
 
     const handleFileUnlocked = (data: FileOperationEvent) => {
@@ -183,7 +186,7 @@ export const useSocketListeners = () => {
         editorSocket.offAny(handleAnyEvent);
       }
     };
-  }, [editorSocket, openFile, setActiveFileTab, setTreeStructure, addLock, removeLock]);
+  }, [editorSocket, openFile, setActiveFileTab, setTreeStructure, addLock, removeLock, userId]);
 
   // ✅ User presence listeners (requires userId)
   useEffect(() => {

@@ -29,7 +29,7 @@ export default function EditorComponent() {
   const { editorSocket, emitJoinFileRoom, emitLeaveFileRoom, emitSocketEvent } = useEditorSocketStore();
   const { userId } = useUserStore();
   const { activeFileTab } = useActiveFileTabStore();
-  const { isLocked, lockedByUser } = useFileLockStore();
+  const { isLocked, lockedByUser, addLock, removeLock } = useFileLockStore();
 
   const currentFilePath = activeFileTab?.path;
   const isCurrentFileLocked = currentFilePath ? isLocked(currentFilePath) : false;
@@ -125,7 +125,7 @@ export default function EditorComponent() {
     });
   }, [clearAllTimers]);
 
-  // File Lock by other user
+
  
   // 🔒 File lock specific socket listeners (only for UI state management)
   useEffect(() => {
@@ -133,7 +133,7 @@ export default function EditorComponent() {
 
     const handleFileLockGranted = ({ userId: lockerId, username, filePath, requestId }: any) => {
       console.log('🔒 File lock granted:', { lockerId, username, filePath, requestId, currentRequestId: lockState.requestId });
-      
+       addLock({ path: filePath, lockedBy: lockerId });
       // Handle successful lock response for our request
       if (requestId) {
         setLockState(currentState => {
@@ -200,6 +200,7 @@ export default function EditorComponent() {
 
     const handleFileLockReleased = ({ filePath }: any) => {
       console.log('🔓 File lock released:', filePath);
+       removeLock(filePath);
       if (filePath === currentFilePath) {
         setLockState(prev => ({
           ...prev,
@@ -483,7 +484,6 @@ export default function EditorComponent() {
           automaticLayout: true,
           readOnly: !activeFileTab || !canEdit,
           wordWrap: 'on',
-          scrollBeyondLastLine: false,
           smoothScrolling: true,
           cursorBlinking: 'smooth',
         }}
