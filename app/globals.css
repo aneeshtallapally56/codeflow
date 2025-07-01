@@ -187,3 +187,16 @@ html, body {
 .toast-info {
   border-left: 4px solid #3b82f6; /* blue */
 }
+
+.loader {
+    position: relative;
+    animation: pulse 1s linear infinite;
+}
+.loader, .loader:after {
+    width: 20px;
+    height: 20px;
+    border: 3px solid #fff;
+    border-radius: 50%;
+    display: inline-block;
+    box-sizing: border-box;
+}

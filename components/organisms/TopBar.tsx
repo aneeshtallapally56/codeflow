@@ -1,6 +1,8 @@
 import { Button } from "../ui/button";
 import { UserInfo } from "@/components/molecules/UserInfo";
 import { ActionGroup } from "@/components/molecules/ActionGroup";
+import { Edit } from "lucide-react";
+import { EditInfo } from "../atoms/EditInfo/EditInfo";
 
 export const TopBar = () => {
   return (
@@ -13,6 +15,7 @@ export const TopBar = () => {
           </Button>
           <UserInfo />
         </div>
+        <EditInfo />
         <ActionGroup />
       </div>
     </div>

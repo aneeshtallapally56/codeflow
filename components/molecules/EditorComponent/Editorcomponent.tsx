@@ -66,7 +66,7 @@ export default function EditorComponent() {
 
     const handleFileLockGranted = ({ userId: lockerId, username, filePath }: any) => {
       console.log('🔒 File lock granted:', { lockerId, username, filePath });
-      addLock({ path: filePath, lockedBy: lockerId });
+      addLock({ path: filePath, lockedBy: lockerId,lockedByUsername: username  });
       
       if (filePath === currentFilePath) {
         setIsRequestingLock(false);
@@ -77,7 +77,6 @@ export default function EditorComponent() {
     const handleFileLockDenied = ({ username }: any) => {
       console.log('🚫 File lock denied by:', username);
       setIsRequestingLock(false);
-      setLockError(`File is being edited by ${username}`);
     };
 
     const handleFileLockReleased = ({ filePath }: any) => {
@@ -94,7 +93,7 @@ export default function EditorComponent() {
       setLockError(`File is being edited by ${username}`);
       
       if (currentFilePath) {
-        addLock({ path: currentFilePath, lockedBy: lockerId });
+        addLock({ path: currentFilePath, lockedBy: lockerId , lockedByUsername: username });
       }
     };
 
@@ -220,14 +219,6 @@ export default function EditorComponent() {
         </div>
       )}
 
-      {/* Lock status */}
-      {isCurrentFileLocked && (
-        <div className={`absolute top-2 left-2 px-3 py-1 text-sm rounded z-10 ${
-          isLockedByCurrentUser ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-        }`}>
-          {isLockedByCurrentUser ? '🔒 You are editing' : '🔒 Read-only'}
-        </div>
-      )}
 
       {/* Unlock button */}
       {isLockedByCurrentUser && (

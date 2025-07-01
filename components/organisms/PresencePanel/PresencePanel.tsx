@@ -4,6 +4,7 @@ import { useProjectRoomMembersStore } from "@/lib/store/projectRoomMemberStore";
 export default function CollaboratorPanel() {
     const { fileRoomUsers } = useFileRoomMembersStore();
     const { projectRoomUsers } = useProjectRoomMembersStore();
+    const {userId:currentUserId} = useUserStore()
   return (
     <div className="fixed bottom-8 right-4 w-[300px] md:w-80 h-[80vh] bg-[#202020] border border-zinc-700 rounded shadow-lg z-[99] p-4 text-zinc-100">
       {/* Header */}
@@ -23,7 +24,7 @@ export default function CollaboratorPanel() {
         {fileRoomUsers.map((user) => (
           <UserCard
             key={user.userId}
-            name={user.username}
+            name={user.userId === currentUserId? `${user.username}  (You)` : user.username}
             imageUrl={`https://i.pravatar.cc/${user.userId}`}
           />
           
@@ -36,7 +37,7 @@ export default function CollaboratorPanel() {
         {projectRoomUsers.map((user) => (
           <UserCard
             key={user.userId}
-            name={user.username}
+             name={user.userId === currentUserId? `${user.username}  (You)` : user.username}
            imageUrl={`https://i.pravatar.cc/${user.userId}`}
           
           />
@@ -47,6 +48,7 @@ export default function CollaboratorPanel() {
 }
 
  import Image from "next/image";
+import { useUserStore } from "@/lib/store/userStore";
 
 type UserCardProps = {
   name: string;

@@ -3,6 +3,7 @@ import { create } from "zustand";
 type FileLock = {
   path: string;
   lockedBy: string;
+   lockedByUsername: string;
 };
 type FileLockStore = {
   locks: FileLock[];
@@ -13,6 +14,7 @@ type FileLockStore = {
   isLocked: (path: string) => boolean;
   lockedByUser: (path: string, userId: string | null) => boolean;
   getLockInfo: (path: string) => FileLock | null; // New method
+    getLockedByUsername: (path: string) => string | null;
   clearAllLocks: () => void; // New method for cleanup
 };
 
@@ -34,6 +36,10 @@ export const useFileLockStore = create<FileLockStore>((set, get) => ({
   isLocked: (path) => get().locks.some((lock) => lock.path === path),
   lockedByUser: (path, userId) =>
     get().locks.some((lock) => lock.path === path && lock.lockedBy === userId),
+   getLockedByUsername: (path) => {
+    const lock = get().locks.find((lock) => lock.path === path);
+    return lock?.lockedByUsername || null;
+  },
    getLockInfo: (path) =>
         get().locks.find((lock) => lock.path === path) || null,
     clearAllLocks: () => set({ locks: [] }),
