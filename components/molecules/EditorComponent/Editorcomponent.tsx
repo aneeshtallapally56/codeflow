@@ -240,6 +240,7 @@ export default function EditorComponent() {
       )}
 
       {/* Monaco Editor */}
+
       <Editor
         height="70vh"
         width="100%"
@@ -257,6 +258,7 @@ export default function EditorComponent() {
           smoothScrolling: true,
         }}
       />
+   
     </div>
   );
 }

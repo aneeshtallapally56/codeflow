@@ -15,7 +15,8 @@ import { useTreeStructureStore } from "@/lib/store/treeStructureStore";
 import { connectEditorSocket } from "@/lib/socket/editorSocketClient";
 import { useSocketListeners } from "@/lib/utils/useSocketlisteners";
 import { useRoomMembersStore } from "@/lib/store/roomMembersStore";
-import { Editor } from "@monaco-editor/react";
+import PresencePanel from "@/components/organisms/PresencePanel/PresencePanel";
+import { CollaboratorButton } from "@/components/atoms/CollabButton/CollabButton";
 
 export default function Page() {
 
@@ -106,18 +107,19 @@ const handleForbidden = React.useCallback(
 }
   return (
     <div className="w-full h-full bg-[#121212] flex flex-col md:px-16 px-4 py-6 min-w-0">
-      
-        {/* <TopBar /> /*}
-        // <EditorTabs /> 
-        {/* <div className="flex-1 min-h-0 overflow-hidden"> */}
-        <EditorTabs />
-        <div className="mt-4"><Editorcomponent /></div>
-          
-       
-     
-          <CollaboratorPanel />
-        
+      <div className="h-full  ">
+         <TopBar />
+         <div className="relative">
+        <section className=" w-[70vw] h-[70vh]">
+          <EditorTabs />
+        <div className="flex-1 min-h-0 overflow-hidden mt-4">
+          <Editorcomponent />
+        </div>
+        </section>
+        <PresencePanel />
+        </div>
       </div>
-
+    <CollaboratorButton />x
+    </div>
   );
 }

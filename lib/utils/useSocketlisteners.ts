@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef } from "react";
+import {  useEffect, useRef } from "react";
 import path from "path";
 import { toast } from "sonner";
 
@@ -7,7 +7,7 @@ import { useEditorSocketStore } from "../store/editorSocketStore";
 import { useActiveFileTabStore } from "../store/activeFileTabStore";
 import { useTreeStructureStore } from "../store/treeStructureStore";
 import { useEditorTabStore } from "../store/editorTabStores";
-import { useRoomMembersStore } from "../store/roomMembersStore";
+import{useProjectRoomMembersStore } from "../store/projectRoomMemberStore";
 import { useUserStore } from "../store/userStore";
 import { useFileLockStore } from "../store/fileLockStore";
 
@@ -195,7 +195,7 @@ export const useSocketListeners = () => {
     const handleUserJoined = (user: UserPresenceEvent) => {
       console.log("👥 User joined project:", user);
       const isCurrentUser = user.userId === userId;
-      useRoomMembersStore.getState().addLiveUser(user);
+      useProjectRoomMembersStore.getState(). addProjectRoomUser(user);
 
       if (isCurrentUser) {
         toast.success("You joined the collaboration");
@@ -210,7 +210,8 @@ export const useSocketListeners = () => {
       username?: string;
     }) => {
       console.log("👥 User left project:", data);
-      useRoomMembersStore.getState().removeLiveUser(data.socketId);
+       useProjectRoomMembersStore.getState(). removeProjectRoomUser(data.socketId);
+
       
       if (data.userId !== userId) {
         const username = data.username || data.userId;
@@ -222,18 +223,18 @@ export const useSocketListeners = () => {
       console.log("👥 Initial users in project:", users);
       // Set initial user presence
       users.forEach(user => {
-        useRoomMembersStore.getState().addLiveUser(user);
+        useProjectRoomMembersStore.getState(). addProjectRoomUser(user);
       });
     };
 
     // Register user-dependent listeners
-    editorSocket.on("userJoined", handleUserJoined);
-    editorSocket.on("userLeft", handleUserLeft);
+    editorSocket.on("userJoinedProject", handleUserJoined);
+    editorSocket.on("userLeftProject", handleUserLeft);
     editorSocket.on("initialUsers", handleInitialUsers);
 
     return () => {
-      editorSocket.off("userJoined", handleUserJoined);
-      editorSocket.off("userLeft", handleUserLeft);
+      editorSocket.off("userJoinedProject", handleUserJoined);
+      editorSocket.off("userLeftProject", handleUserLeft);
       editorSocket.off("initialUsers", handleInitialUsers);
     };
   }, [editorSocket, userId]);
