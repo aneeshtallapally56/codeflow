@@ -29,9 +29,10 @@ export default function EditorComponent() {
   }
 
   // 🔒 Lock status
-  const isLockedByMe = lockedBy[currentFilePath] === userId;
-  const isLockedByOther = lockedBy[currentFilePath] && lockedBy[currentFilePath] !== userId;
-  const isUnlocked = !lockedBy[currentFilePath];
+  const currentLock = lockedBy[currentFilePath];
+  const isLockedByMe = currentLock === userId;
+  const isLockedByOther = currentLock && currentLock !== userId;
+  const isUnlocked = !currentLock;
 
   // 🔁 Handle switching between files
   useEffect(() => {
@@ -55,6 +56,23 @@ export default function EditorComponent() {
   function handleChange(value: string | undefined) {
     if (!editorSocket || !currentFilePath || !projectId || !activeFileTab || !value) return;
     if (value.trim() === "// No file selected") return;
+
+    const currentLock = lockedBy[currentFilePath];
+    
+    // If unlocked, try to lock it
+    if (!currentLock) {
+      emitSocketEvent("lockFile", {
+        filePath: currentFilePath,
+        projectId,
+        userId,
+      });
+      // Continue with the edit - the lock should be granted immediately
+    }
+    
+    // Only allow edits if I own the lock or file is unlocked
+    if (currentLock && currentLock !== userId) {
+      return; // Someone else has the lock
+    }
 
     updateFileContent(currentFilePath, value);
 
@@ -98,15 +116,9 @@ export default function EditorComponent() {
     <div className="relative">
       {activeFileTab ? (
         <>
-          {/* 🟡 Lock info banner (optional) */}
-          {isUnlocked && (
-            <div className="bg-yellow-100 text-yellow-900 text-sm p-2 px-3">
-              🔓 File is unlocked — click Edit to claim it.
-            </div>
-          )}
           {isLockedByOther && (
             <div className="bg-red-100 text-red-900 text-sm p-2 px-3">
-              🔒 {lockedBy[currentFilePath] === userId ? "You" : "Another user"} is editing this file.
+              🔒 Another user is editing this file.
             </div>
           )}
 
@@ -123,7 +135,7 @@ export default function EditorComponent() {
               fontFamily: "Fira Code, monospace",
               minimap: { enabled: false },
               automaticLayout: true,
-              readOnly: !isLockedByMe,
+              readOnly: !!isLockedByOther,
               wordWrap: "on",
               smoothScrolling: true,
             }}
