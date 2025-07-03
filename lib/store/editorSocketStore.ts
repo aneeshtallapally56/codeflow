@@ -28,11 +28,11 @@ export const useEditorSocketStore = create<EditorSocketState>((set, get) => ({
   },
 
   emitJoinFileRoom: (projectId, path) => {
-    get().editorSocket?.emit("joinFileRoom", { projectId, pathToFileOrFolder: path });
+    get().editorSocket?.emit("joinFileRoom", { projectId, filePath: path });
   },
 
   emitLeaveFileRoom: (projectId, path) => {
-    get().editorSocket?.emit("leaveFileRoom", { projectId, pathToFileOrFolder: path });
+    get().editorSocket?.emit("leaveFileRoom", { projectId, filePath: path });
   },
 
   emitJoinProjectRoom: (projectId) => {

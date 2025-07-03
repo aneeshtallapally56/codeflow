@@ -192,6 +192,7 @@ export const useSocketListeners = () => {
   // ✅ User presence listeners (requires userId)
   useEffect(() => {
     if (!editorSocket || !userId) return;
+      console.log("🧩 [Presence useEffect] Running with socket:", editorSocket, "userId:", userId);
 
     const handleUserJoinedProject = (user: UserPresenceEvent) => {
       console.log("👥 User joined project:", user);
@@ -246,7 +247,7 @@ export const useSocketListeners = () => {
       username?: string;
     })=>{
       console.log("👥 User left file:", data);
-      useFileRoomMembersStore.getState(). removeFileRoomUser(data.socketId);
+      useFileRoomMembersStore.getState(). removeFileRoomUser(data.userId);
 
       if (data.userId !== userId) {
         const username = data.username || data.userId;
@@ -262,9 +263,11 @@ export const useSocketListeners = () => {
     }
     // Register user-dependent listeners
     editorSocket.on("userJoinedProject", handleUserJoinedProject);
+   
     editorSocket.on("userLeftProject", handleUserLeftProject);
     editorSocket.on("initialUsers", handleInitialUsers);
      editorSocket.on("userJoinedFile", handleUserJoinedFile);
+      console.log("✅ Registered: userJoinedFile listener");
     editorSocket.on("userLeftFile", handleUserLeftFile);
     editorSocket.on("initialFileUsers", handleInitialFileUsers);
 

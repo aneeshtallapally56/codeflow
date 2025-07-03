@@ -11,7 +11,7 @@ type State = {
   fileRoomUsers: LiveUser[];
   setFileRoomUsers: (users: LiveUser[]) => void;
   addFileRoomUser: (user: LiveUser) => void;
-  removeFileRoomUser: (socketId: string) => void;
+  removeFileRoomUser: (userId: string) => void;
 };
 
 export const useFileRoomMembersStore = create<State>((set) => ({
@@ -30,8 +30,8 @@ export const useFileRoomMembersStore = create<State>((set) => ({
       return { fileRoomUsers: [...state.fileRoomUsers, user] };
     }),
 
-  removeFileRoomUser: (socketId) =>
+  removeFileRoomUser: (userId) =>
     set((state) => ({
-      fileRoomUsers: state.fileRoomUsers.filter((u) => u.socketId !== socketId),
+      fileRoomUsers: state.fileRoomUsers.filter((u) => u.userId !== userId),
     })),
 }));

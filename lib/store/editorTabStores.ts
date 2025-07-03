@@ -1,5 +1,7 @@
 import { create } from "zustand";
 import { useActiveFileTabStore } from "./activeFileTabStore";
+import { useTreeStructureStore } from "./treeStructureStore";
+import { useEditorSocketStore } from "./editorSocketStore";
 
 export type FileTab = {
   path: string;
@@ -16,21 +18,54 @@ type EditorTabStore = {
   closeFile: (path: string) => void;
 };
 
+let debounceTimeout: NodeJS.Timeout | null = null;
+
 export const useEditorTabStore = create<EditorTabStore>((set, get) => ({
   openTabs: [],
   activePath: null,
 
-  setActivePath: (path) => {
-    const tab = get().openTabs.find((t) => t.path === path);
-    if (tab) {
-      useActiveFileTabStore.getState().setActiveFileTab({
-        path: tab.path,
-        value: tab.content,
-        extension: tab.extension,
-      });
-      set({ activePath: path });
+  setActivePath: (newPath) => {
+  const { activePath, openTabs } = get();
+  if (newPath === activePath) return;
+
+  const newTab = openTabs.find((t) => t.path === newPath);
+  const prevTab = openTabs.find((t) => t.path === activePath);
+  const projectId = useTreeStructureStore.getState().projectId;
+
+  if (!projectId) {
+    console.error("❌ No project ID found in store");
+    return;
+  }
+
+  const leavePath = prevTab?.path;
+  const joinPath = newTab?.path;
+
+  if (debounceTimeout) clearTimeout(debounceTimeout);
+  debounceTimeout = setTimeout(() => {
+    if (leavePath) {
+      useEditorSocketStore.getState().emitLeaveFileRoom(projectId, leavePath);
+      console.log("⬅️ [debounced] Leaving file room:", leavePath);
     }
-  },
+    if (joinPath) {
+      useEditorSocketStore.getState().emitJoinFileRoom(projectId, joinPath);
+      console.log("➡️ [debounced] Joining file room:", joinPath);
+    }
+  }, 200);
+
+  if (newTab) {
+    useActiveFileTabStore.getState().setActiveFileTab({
+      path: newTab.path,
+      value: newTab.content,
+      extension: newTab.extension,
+    });
+  }
+
+  console.log("🔄 Switching to:", newPath);
+  console.log("⬅️ Leaving:", prevTab?.path);
+  console.log("➡️ Joining:", newTab?.path);
+
+  set({ activePath: newPath });
+},
 
   openFile: (file) => {
     const exists = get().openTabs.some((tab) => tab.path === file.path);
@@ -51,21 +86,36 @@ export const useEditorTabStore = create<EditorTabStore>((set, get) => ({
   closeFile: (path) => {
     const { openTabs, activePath } = get();
     const remainingTabs = openTabs.filter((tab) => tab.path !== path);
-    const newActive =
-      activePath === path
-        ? remainingTabs[0] ?? null
-        : openTabs.find((t) => t.path === activePath) ?? null;
+    const isClosingActive = activePath === path;
+    const newActive = isClosingActive
+      ? remainingTabs[0] ?? null
+      : openTabs.find((t) => t.path === activePath) ?? null;
+console.log("❌ Closing tab:", path);
+console.log("⬅️ Leaving (on close):", path);
+console.log("➡️ Switching to (on close):", newActive?.path);
+    const projectId = useTreeStructureStore.getState().projectId;
+    if (!projectId) {
+      console.error("❌ No project ID found in store");
+      return;
+    }
 
-    if (activePath === path) {
-      if (newActive) {
-        useActiveFileTabStore.getState().setActiveFileTab({
-          path: newActive.path,
-          value: newActive.content,
-          extension: newActive.extension,
-        });
-      } else {
-        useActiveFileTabStore.getState().clearActiveFileTab();
-      }
+    // Immediate leave on close (no debounce)
+    if (isClosingActive) {
+      useEditorSocketStore.getState().emitLeaveFileRoom(projectId, path);
+    }
+
+    if (isClosingActive && newActive) {
+      useActiveFileTabStore.getState().setActiveFileTab({
+        path: newActive.path,
+        value: newActive.content,
+        extension: newActive.extension,
+      });
+
+      useEditorSocketStore.getState().emitJoinFileRoom(projectId, newActive.path);
+    }
+
+    if (isClosingActive && !newActive) {
+      useActiveFileTabStore.getState().clearActiveFileTab();
     }
 
     set({
