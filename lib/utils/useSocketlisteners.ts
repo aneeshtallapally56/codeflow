@@ -13,13 +13,13 @@ import { useFileLockStore } from "../store/fileLockStore";
 import { useFileRoomMembersStore } from "../store/fileRoomMemberStore";
 
 // Standardized event payload types
-interface FileLockEvent {
-  userId: string;
-  username: string;
+interface FileUnlock {
   filePath: string;
-  requestId?: string;
 }
-
+interface FileLock {
+  filePath: string;
+  userId: string;
+}
 interface FileOperationEvent {
   filePath: string;
   projectId?: string;
@@ -47,6 +47,7 @@ export const useSocketListeners = () => {
   const { setActiveFileTab } = useActiveFileTabStore();
   const { setTreeStructure } = useTreeStructureStore();
   const { openFile } = useEditorTabStore();
+  const {setLock} = useFileLockStore();
 
   const userId = useUserStore((s) => s.userId);
 
@@ -116,8 +117,14 @@ export const useSocketListeners = () => {
     };
 
     // File locking events - Store management only (UI handled in EditorComponent)
-
-
+const handleFileUnlocked = ({filePath}: FileUnlock) => {
+   console.log("🔓 File unlocked:", filePath);
+   setLock(filePath, null);
+}
+const handleFileLocked = ({filePath, userId}: FileLock) => {
+  console.log("🔒 File locked:", filePath, "by user:", userId);
+  setLock(filePath, userId);
+};
     // Error handling
     const handleError = (data: { data: string }) => {
       console.error("❌ Socket error:", data);
@@ -140,6 +147,8 @@ export const useSocketListeners = () => {
     editorSocket.on("folderDeleted", handleFolderDeleted);
     editorSocket.on("fileCreated", handleFileCreated);
     editorSocket.on("folderCreated", handleFolderCreated);
+    editorSocket.on("fileLocked", handleFileLocked);
+    editorSocket.on("fileUnlocked", handleFileUnlocked);
     
     // File locking - Store updates only (no UI logic)
   
@@ -163,6 +172,8 @@ export const useSocketListeners = () => {
       editorSocket.off("folderCreated", handleFolderCreated);
       editorSocket.off("fileLocked", handleFileLocked);
       editorSocket.off("fileUnlocked", handleFileUnlocked);
+      editorSocket.off("fileUnlocked", handleFileUnlocked);
+      editorSocket.off("fileLocked", handleFileLocked);
       editorSocket.off("error", handleError);
       
       if (process.env.NODE_ENV === 'development') {
