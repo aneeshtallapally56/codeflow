@@ -15,7 +15,7 @@ export const TopBar = () => {
           </Button>
           <UserInfo />
         </div>
-        <EditInfo />
+
         <ActionGroup />
       </div>
     </div>

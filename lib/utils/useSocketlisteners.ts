@@ -47,7 +47,7 @@ export const useSocketListeners = () => {
   const { setActiveFileTab } = useActiveFileTabStore();
   const { setTreeStructure } = useTreeStructureStore();
   const { openFile } = useEditorTabStore();
-  const { addLock, removeLock } = useFileLockStore();
+
   const userId = useUserStore((s) => s.userId);
 
   const initialized = useRef(false);
@@ -116,24 +116,7 @@ export const useSocketListeners = () => {
     };
 
     // File locking events - Store management only (UI handled in EditorComponent)
-    const handleFileLocked = (data: FileLockEvent) => {
-      console.log("🔒 fileLocked store update:", data.filePath, "by", data.userId);
-      
-      if (data.filePath && data.userId) {
-        addLock({ 
-          path: data.filePath, 
-          lockedBy: data.userId 
-        });
-      }
-       if (data.userId !== userId) {
-          toast(`${data.username} started editing ${path.basename(data.filePath)}`);
-        }
-    };
 
-    const handleFileUnlocked = (data: FileOperationEvent) => {
-      console.log("🔓 fileUnlocked store update:", data.filePath);
-      removeLock(data.filePath);
-    };
 
     // Error handling
     const handleError = (data: { data: string }) => {
@@ -159,8 +142,7 @@ export const useSocketListeners = () => {
     editorSocket.on("folderCreated", handleFolderCreated);
     
     // File locking - Store updates only (no UI logic)
-    editorSocket.on("fileLocked", handleFileLocked);
-    editorSocket.on("fileUnlocked", handleFileUnlocked);
+  
     
     editorSocket.on("error", handleError);
     
@@ -187,7 +169,7 @@ export const useSocketListeners = () => {
         editorSocket.offAny(handleAnyEvent);
       }
     };
-  }, [editorSocket, openFile, setActiveFileTab, setTreeStructure, addLock, removeLock, userId]);
+  }, [editorSocket, openFile, setActiveFileTab, setTreeStructure,userId]);
 
   // ✅ User presence listeners (requires userId)
   useEffect(() => {

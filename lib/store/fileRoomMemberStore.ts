@@ -12,6 +12,8 @@ type State = {
   setFileRoomUsers: (users: LiveUser[]) => void;
   addFileRoomUser: (user: LiveUser) => void;
   removeFileRoomUser: (userId: string) => void;
+  clearFileRoomUsers: () => void;
+  
 };
 
 export const useFileRoomMembersStore = create<State>((set) => ({
@@ -34,4 +36,5 @@ export const useFileRoomMembersStore = create<State>((set) => ({
     set((state) => ({
       fileRoomUsers: state.fileRoomUsers.filter((u) => u.userId !== userId),
     })),
+    clearFileRoomUsers: () => set({ fileRoomUsers: [] }),
 }));
