@@ -1,13 +1,14 @@
 'use client';
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Editor from '@monaco-editor/react';
 
 import { useEditorSocketStore } from '@/lib/store/editorSocketStore';
 import { useActiveFileTabStore } from '@/lib/store/activeFileTabStore';
 import { useFileLockStore } from '@/lib/store/fileLockStore';
 import { useUserStore } from '@/lib/store/userStore';
+import { useEditorTabStore } from '@/lib/store/editorTabStores';
 
-// Simple loader component
+// Loading message component
 const LoadingOverlay = ({ message }: { message: string }) => (
   <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-20">
     <div className="bg-white p-4 rounded-lg shadow-lg flex items-center gap-3">
@@ -18,32 +19,37 @@ const LoadingOverlay = ({ message }: { message: string }) => (
 );
 
 export default function EditorComponent() {
+  const updateFileContent = useEditorTabStore((state) => state.updateFileContent);
+  // References for timers and tracking
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const previousPathRef = useRef<string | null>(null);
 
-  // Simple loading state
+
+  // Simple state variables
   const [isRequestingLock, setIsRequestingLock] = useState(false);
   const [lockError, setLockError] = useState<string | null>(null);
 
-  // Global stores
+  // Get data from stores
   const { editorSocket, emitJoinFileRoom, emitLeaveFileRoom, emitSocketEvent } = useEditorSocketStore();
   const { userId } = useUserStore();
   const { activeFileTab } = useActiveFileTabStore();
   const { isLocked, lockedByUser, addLock, removeLock } = useFileLockStore();
 
+  // Get current file info
   const currentFilePath = activeFileTab?.path;
   const isCurrentFileLocked = currentFilePath ? isLocked(currentFilePath) : false;
   const isLockedByCurrentUser = currentFilePath ? lockedByUser(currentFilePath, userId) : false;
   const canEdit = !isCurrentFileLocked || isLockedByCurrentUser;
 
-  const extractProjectId = (fullPath: string) => {
+  // Helper function to get project ID from file path
+  function extractProjectId(fullPath: string) {
     const segments = fullPath.split('/');
     const index = segments.indexOf('generated-projects');
     return index !== -1 && segments[index + 1] ? segments[index + 1] : '';
-  };
+  }
 
-  // Simple lock request
-  const requestFileLock = useCallback((filePath: string) => {
+  // Function to request file lock
+  function requestFileLock(filePath: string) {
     if (!editorSocket || !filePath || isRequestingLock) return;
 
     const projectId = extractProjectId(filePath);
@@ -54,55 +60,60 @@ export default function EditorComponent() {
 
     emitSocketEvent('lockFile', { projectId, filePath });
 
-    // Simple timeout
+    // Stop loading after 2 seconds
     setTimeout(() => {
       setIsRequestingLock(false);
     }, 2000);
-  }, [editorSocket, emitSocketEvent, isRequestingLock]);
+  }
 
-  // Socket listeners for file locking
+  // Listen for socket events about file locking
   useEffect(() => {
     if (!editorSocket) return;
 
-    const handleFileLockGranted = ({ userId: lockerId, username, filePath }: any) => {
+    // When lock is granted
+    function handleFileLockGranted({ userId: lockerId, username, filePath }: any) {
       console.log('🔒 File lock granted:', { lockerId, username, filePath });
-      addLock({ path: filePath, lockedBy: lockerId,lockedByUsername: username  });
+      addLock({ path: filePath, lockedBy: lockerId, lockedByUsername: username });
       
       if (filePath === currentFilePath) {
         setIsRequestingLock(false);
         setLockError(null);
       }
-    };
+    }
 
-    const handleFileLockDenied = ({ username }: any) => {
+    // When lock is denied
+    function handleFileLockDenied({ username }: any) {
       console.log('🚫 File lock denied by:', username);
       setIsRequestingLock(false);
-    };
+    }
 
-    const handleFileLockReleased = ({ filePath }: any) => {
+    // When lock is released
+    function handleFileLockReleased({ filePath }: any) {
       console.log('🔓 File lock released:', filePath);
       removeLock(filePath);
       if (filePath === currentFilePath) {
         setLockError(null);
       }
-    };
+    }
 
-    const handleFileLockedByOther = ({ userId: lockerId, username }: any) => {
+    // When file is locked by someone else
+    function handleFileLockedByOther({ userId: lockerId, username }: any) {
       console.log('🔒 File locked by other user:', username);
       setIsRequestingLock(false);
       setLockError(`File is being edited by ${username}`);
       
       if (currentFilePath) {
-        addLock({ path: currentFilePath, lockedBy: lockerId , lockedByUsername: username });
+        addLock({ path: currentFilePath, lockedBy: lockerId, lockedByUsername: username });
       }
-    };
+    }
 
-    // Register listeners
+    // Add event listeners
     editorSocket.on('fileLockGranted', handleFileLockGranted);
     editorSocket.on('fileLockDenied', handleFileLockDenied);
     editorSocket.on('fileLockReleased', handleFileLockReleased);
     editorSocket.on('fileLockedByOther', handleFileLockedByOther);
 
+    // Remove event listeners when component unmounts
     return () => {
       editorSocket.off('fileLockGranted', handleFileLockGranted);
       editorSocket.off('fileLockDenied', handleFileLockDenied);
@@ -111,7 +122,7 @@ export default function EditorComponent() {
     };
   }, [editorSocket, currentFilePath, addLock, removeLock]);
 
-  // File switching logic
+  // Handle switching between files
   useEffect(() => {
     const newPath = activeFileTab?.path;
     const oldPath = previousPathRef.current;
@@ -136,16 +147,24 @@ export default function EditorComponent() {
 
       previousPathRef.current = newPath;
     }
-  }, [activeFileTab?.path, editorSocket, emitJoinFileRoom, emitLeaveFileRoom, emitSocketEvent, lockedByUser, userId, requestFileLock]);
+  }, [activeFileTab?.path, editorSocket, emitJoinFileRoom, emitLeaveFileRoom, emitSocketEvent, lockedByUser, userId]);
 
-  // Handle editor changes with debouncing
-  const handleChange = useCallback((value: string | undefined) => {
+  // Handle when user types in editor
+ 
+function handleChange(value: string | undefined) {
     if (!canEdit || !editorSocket) return;
 
+    // Update local state immediately when user types
+    if (currentFilePath && value) {
+      updateFileContent(currentFilePath, value);
+    }
+
+    // Clear previous timer
     if (timerRef.current) {
       clearTimeout(timerRef.current);
     }
 
+    // Set new timer to save after 1 second of no typing
     timerRef.current = setTimeout(() => {
       const filePath = activeFileTab?.path;
       const projectId = filePath ? extractProjectId(filePath) : '';
@@ -158,17 +177,17 @@ export default function EditorComponent() {
         });
       }
     }, 1000);
-  }, [canEdit, editorSocket, activeFileTab?.path, emitSocketEvent]);
+  }
 
-  // Handle manual unlock
-  const handleUnlockFile = useCallback(() => {
+  // Function to manually unlock file
+  function handleUnlockFile() {
     if (currentFilePath && isLockedByCurrentUser && editorSocket) {
       const projectId = extractProjectId(currentFilePath);
       emitSocketEvent('unlockFile', { projectId, filePath: currentFilePath });
     }
-  }, [currentFilePath, isLockedByCurrentUser, editorSocket, emitSocketEvent]);
+  }
 
-  // Cleanup on unmount
+  // Clean up when component is destroyed
   useEffect(() => {
     return () => {
       if (timerRef.current) {
@@ -182,16 +201,23 @@ export default function EditorComponent() {
     };
   }, [currentFilePath, isLockedByCurrentUser, editorSocket, emitSocketEvent]);
 
-  const getLanguage = useCallback((extension: string) => {
+  // Get programming language based on file extension
+  function getLanguage(extension: string) {
     const languageMap: Record<string, string> = {
-      '.js': 'javascript', '.ts': 'typescript', '.jsx': 'javascript',
-      '.tsx': 'typescript', '.py': 'python', '.html': 'html',
-      '.css': 'css', '.json': 'json', '.md': 'markdown',
+      '.js': 'javascript', 
+      '.ts': 'typescript', 
+      '.jsx': 'javascript',
+      '.tsx': 'typescript', 
+      '.py': 'python', 
+      '.html': 'html',
+      '.css': 'css', 
+      '.json': 'json', 
+      '.md': 'markdown',
     };
     return languageMap[extension] || 'plaintext';
-  }, []);
+  }
 
-  // Clear error after 5 seconds
+  // Clear error message after 5 seconds
   useEffect(() => {
     if (lockError) {
       const timer = setTimeout(() => setLockError(null), 5000);
@@ -201,12 +227,12 @@ export default function EditorComponent() {
 
   return (
     <div className="relative">
-      {/* Loading overlay when requesting lock */}
+      {/* Show loading when requesting lock */}
       {isRequestingLock && (
         <LoadingOverlay message="Requesting edit access..." />
       )}
 
-      {/* Error message */}
+      {/* Show error message */}
       {lockError && (
         <div className="absolute top-2 right-2 bg-red-100 text-red-800 px-3 py-2 rounded z-10 text-sm border border-red-300">
           {lockError}
@@ -219,8 +245,7 @@ export default function EditorComponent() {
         </div>
       )}
 
-
-      {/* Unlock button */}
+      {/* Show unlock button when file is locked by current user */}
       {isLockedByCurrentUser && (
         <button
           onClick={handleUnlockFile}
@@ -230,8 +255,7 @@ export default function EditorComponent() {
         </button>
       )}
 
-      {/* Monaco Editor */}
-
+      {/* The code editor */}
       <Editor
         height="70vh"
         width="100%"
@@ -249,7 +273,6 @@ export default function EditorComponent() {
           smoothScrolling: true,
         }}
       />
-   
     </div>
   );
 }

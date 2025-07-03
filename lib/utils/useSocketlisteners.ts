@@ -196,14 +196,8 @@ export const useSocketListeners = () => {
 
     const handleUserJoinedProject = (user: UserPresenceEvent) => {
       console.log("👥 User joined project:", user);
-      const isCurrentUser = user.userId === userId;
-      useProjectRoomMembersStore.getState(). addProjectRoomUser(user);
 
-      if (isCurrentUser) {
-        toast.success("You joined the collaboration");
-      } else {
-        toast(`${user.username} joined the collaboration`);
-      }
+      useProjectRoomMembersStore.getState(). addProjectRoomUser(user);
     };
 
     const handleUserLeftProject = (data: { 
@@ -215,10 +209,7 @@ export const useSocketListeners = () => {
        useProjectRoomMembersStore.getState(). removeProjectRoomUser(data.socketId);
 
       
-      if (data.userId !== userId) {
-        const username = data.username || data.userId;
-        toast(`${username} left the collaboration`);
-      }
+      
     };
 
     const handleInitialUsers = (users: Array<UserPresenceEvent>) => {
@@ -231,14 +222,10 @@ export const useSocketListeners = () => {
 
     const handleUserJoinedFile = (user: UserPresenceEvent)=>{
       console.log("👥 User joined file:", user);
-      const isCurrentUser = user.userId === userId;
+
       useFileRoomMembersStore.getState(). addFileRoomUser(user);
 
-      if (isCurrentUser) {
-        toast.success("You joined the file");
-      } else {
-        toast(`${user.username} joined the file`);
-      }
+    
     }
 
     const handleUserLeftFile =(data: { 
@@ -249,10 +236,6 @@ export const useSocketListeners = () => {
       console.log("👥 User left file:", data);
       useFileRoomMembersStore.getState(). removeFileRoomUser(data.userId);
 
-      if (data.userId !== userId) {
-        const username = data.username || data.userId;
-        toast(`${username} left the file`);
-      }
     }
     const handleInitialFileUsers = (users: Array<UserPresenceEvent>) => {
       console.log("👥 Initial users in file:", users);

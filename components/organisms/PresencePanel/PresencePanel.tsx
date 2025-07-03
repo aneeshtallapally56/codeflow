@@ -1,9 +1,11 @@
 import { PlusCircleIcon } from "lucide-react";
 import { useFileRoomMembersStore } from "@/lib/store/fileRoomMemberStore";
 import { useProjectRoomMembersStore } from "@/lib/store/projectRoomMemberStore";
+import { useUserStore } from "@/lib/store/userStore";
 export default function CollaboratorPanel() {
   const fileRoomUsers = useFileRoomMembersStore((state) => state.fileRoomUsers);
   const projectRoomUsers = useProjectRoomMembersStore((state) => state.projectRoomUsers);
+  const currentUserId = useUserStore((state) => state.userId);
 
   return (
     <div className="fixed bottom-8 right-4 w-[300px] md:w-80 h-[80vh] bg-[#202020] border border-zinc-700 rounded shadow-lg z-[99] p-4 text-zinc-100">
@@ -48,7 +50,7 @@ export default function CollaboratorPanel() {
 }
 
  import Image from "next/image";
-import { useUserStore } from "@/lib/store/userStore";
+
 
 type UserCardProps = {
   name: string;

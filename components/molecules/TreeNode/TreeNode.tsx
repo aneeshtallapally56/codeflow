@@ -52,7 +52,7 @@ export const TreeNode = ({ fileFolderData }: TreeNodeProps) => {
 
     const event = fileFolderData.type === "file" ? "deleteFile" : "deleteFolder";
     emitSocketEvent(event, {
-      pathToFileOrFolder: fileFolderData.path,
+      filePath: fileFolderData.path,
       projectId,
     });
   };
@@ -64,7 +64,7 @@ export const TreeNode = ({ fileFolderData }: TreeNodeProps) => {
     const event = createType === "file" ? "createFile" : "createFolder";
 
     emitSocketEvent(event, {
-      pathToFileOrFolder: newPath,
+     filePath: newPath,
       projectId,
     });
 
