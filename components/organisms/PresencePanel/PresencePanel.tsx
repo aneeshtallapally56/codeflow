@@ -1,29 +1,39 @@
+"use client";
+
 import { PlusCircleIcon } from "lucide-react";
-import { useFileRoomMembersStore } from "@/lib/store/fileRoomMemberStore";
+
 import { useProjectRoomMembersStore } from "@/lib/store/projectRoomMemberStore";
 import { useUserStore } from "@/lib/store/userStore";
 import { useFileLockStore } from "@/lib/store/fileLockStore";
 import { useActiveFileTabStore } from "@/lib/store/activeFileTabStore";
 import { useEditorSocketStore } from "@/lib/store/editorSocketStore";
 import Image from "next/image";
+import { useMemo } from "react";
+import { useFileRoomUsers } from "@/lib/utils/useFileRoomUsers";
 
 export default function CollaboratorPanel() {
   const lockedBy = useFileLockStore((state) => state.lockedBy);
   const activeFileTab = useActiveFileTabStore((state) => state.activeFileTab);
-  
   const currentFilePath = activeFileTab?.path || "";
+
   const emitSocketEvent = useEditorSocketStore((state) => state.emitSocketEvent);
-  const fileRoomUsers = useFileRoomMembersStore((state) => state.fileRoomUsers);
+
+  const fileRoomUsers = useFileRoomUsers(currentFilePath);
   const projectRoomUsers = useProjectRoomMembersStore((state) => state.projectRoomUsers);
   const currentUserId = useUserStore((state) => state.userId);
-  
+
   const extractProjectId = (fullPath: string) => {
     const segments = fullPath.split("/");
     const index = segments.indexOf("generated-projects");
     return index !== -1 && segments[index + 1] ? segments[index + 1] : "";
   };
 
-  const projectId = extractProjectId(currentFilePath);
+  const projectId = useMemo(() => extractProjectId(currentFilePath), [currentFilePath]);
+
+  // Get who has the lock on the current file
+  const currentFileLock = lockedBy[currentFilePath];
+  const isFileLockedByMe = currentFileLock === currentUserId;
+  const isFileLockedByOther = currentFileLock && currentFileLock !== currentUserId;
 
   return (
     <div className="fixed bottom-8 right-4 w-[300px] md:w-80 h-[80vh] bg-[#202020] border border-zinc-700 rounded shadow-lg z-[99] p-4 text-zinc-100">
@@ -38,13 +48,12 @@ export default function CollaboratorPanel() {
         </button>
       </div>
 
-      {/* Current Collaborators */}
+      {/* File Members */}
       <div className="text-sm text-zinc-300 capitalize mt-3">file members</div>
       <div className="flex flex-col gap-1 pt-3 h-40 md:h-44 overflow-y-auto">
         {fileRoomUsers.map((user) => {
           const isMe = user.userId === currentUserId;
-          const isLockedByMe = lockedBy[currentFilePath] === currentUserId;
-          const isLockedByUser = lockedBy[currentFilePath] === user.userId;
+          const isThisUserLockingTheFile = currentFileLock === user.userId;
 
           return (
             <UserCard
@@ -52,8 +61,8 @@ export default function CollaboratorPanel() {
               userId={user.userId}
               name={isMe ? `${user.username} (You)` : user.username}
               imageUrl={`https://i.pravatar.cc/${user.userId}`}
-              showTransfer={isLockedByMe && !isMe}
-              showRequest={!isMe && isLockedByUser}
+              showTransfer={isFileLockedByMe && !isMe}
+              showRequest={isMe && isFileLockedByOther}
               onTransferClick={() => {
                 emitSocketEvent("transferLock", {
                   filePath: currentFilePath,
@@ -73,7 +82,7 @@ export default function CollaboratorPanel() {
         })}
       </div>
 
-      {/* Other Members */}
+      {/* Project Members */}
       <div className="text-sm text-zinc-300 capitalize mt-3">project members</div>
       <div className="flex flex-col gap-1 pt-3 h-24 md:h-44 overflow-y-auto">
         {projectRoomUsers.map((user) => (
@@ -108,7 +117,6 @@ export function UserCard({
   showRequest = false,
   onTransferClick,
   onRequestClick,
-  userId,
 }: UserCardProps) {
   return (
     <div

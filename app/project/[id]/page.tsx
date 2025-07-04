@@ -70,9 +70,9 @@ const handleForbidden = React.useCallback(
     socket.on("initialUsers", (users) => {
       useProjectRoomMembersStore.getState().setProjectRoomUsers(users);
     });
-     socket.on("initialFileUsers", (users) => {
-useFileRoomMembersStore.getState().setFileRoomUsers(users);
-    });
+socket.on("initialFileUsers", ({ filePath, users }) => {
+  useFileRoomMembersStore.getState().setUsersForFile(filePath, users);
+});
 
     socket.on("connect", () => {
       setEditorSocket(socket);

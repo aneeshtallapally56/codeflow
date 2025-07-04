@@ -35,6 +35,7 @@ interface UserPresenceEvent {
   userId: string;
   username: string;
   socketId: string;
+  filePath?: string; // Optional for file-specific events
 }
 
 interface FileReadEvent {
@@ -252,9 +253,12 @@ const handleFileLockRequest = ({ filePath, projectId, requestedBy, requesterUser
 
     const handleUserJoinedFile = (user: UserPresenceEvent)=>{
       console.log("👥 User joined file:", user);
-
-      useFileRoomMembersStore.getState(). addFileRoomUser(user);
-
+       const filePath = user.filePath;
+       if(!filePath) {
+        console.error("❌ User joined file event missing filePath:", user);
+        return;
+       }
+       useFileRoomMembersStore.getState().addFileRoomUser(filePath, user);
     
     }
 
@@ -262,17 +266,18 @@ const handleFileLockRequest = ({ filePath, projectId, requestedBy, requesterUser
       userId: string; 
       socketId: string;
       username?: string;
+      filePath: string;
     })=>{
       console.log("👥 User left file:", data);
-      useFileRoomMembersStore.getState(). removeFileRoomUser(data.userId);
+      useFileRoomMembersStore.getState().removeFileRoomUser(data.filePath, data.userId);
 
     }
-    const handleInitialFileUsers = (users: Array<UserPresenceEvent>) => {
-      console.log("👥 Initial users in file:", users);
-      // Set initial user presence
-      users.forEach(user => {
-        useFileRoomMembersStore.getState(). addFileRoomUser(user);
-      });
+    const handleInitialFileUsers = (data: {
+  filePath: string;
+  users: Array<UserPresenceEvent>;
+}) => {
+  console.log("👥 Initial users in file:", data);
+  useFileRoomMembersStore.getState().setUsersForFile(data.filePath, data.users);
     }
     // Register user-dependent listeners
     editorSocket.on("userJoinedProject", handleUserJoinedProject);

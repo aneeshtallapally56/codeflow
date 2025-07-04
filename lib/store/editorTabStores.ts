@@ -37,18 +37,9 @@ export const useEditorTabStore = create<EditorTabStore>((set, get) => ({
     if (path === activePath) return;
 
     const newTab = openTabs.find(tab => tab.path === path);
-    const prevTab = openTabs.find(tab => tab.path === activePath);
-    const projectId = useTreeStructureStore.getState().projectId;
-    const editorSocket = useEditorSocketStore.getState();
+    if (!newTab) return;
 
-    if (!projectId || !newTab) return;
-
-    if (prevTab?.path) {
-      editorSocket.emitLeaveFileRoom(projectId, prevTab.path);
-    }
-
-    editorSocket.emitJoinFileRoom(projectId, newTab.path);
-
+    // Update active file tab only
     useActiveFileTabStore.getState().setActiveFileTab({
       path: newTab.path,
       value: newTab.content,
@@ -60,10 +51,16 @@ export const useEditorTabStore = create<EditorTabStore>((set, get) => ({
 
   openFile: (file) => {
     const { openTabs } = get();
-      const projectId = useTreeStructureStore.getState().projectId;
-  const editorSocket = useEditorSocketStore.getState();
+    const projectId = useTreeStructureStore.getState().projectId;
+    const editorSocket = useEditorSocketStore.getState();
+
     const exists = openTabs.some(tab => tab.path === file.path);
     const updatedTabs = exists ? openTabs : [...openTabs, file];
+
+    // Only join new file room if it's a new file
+    if (projectId && !exists) {
+      editorSocket.emitJoinFileRoom(projectId, file.path);
+    }
 
     useActiveFileTabStore.getState().setActiveFileTab({
       path: file.path,
@@ -75,9 +72,6 @@ export const useEditorTabStore = create<EditorTabStore>((set, get) => ({
       openTabs: updatedTabs,
       activePath: file.path,
     });
-  //     if (projectId) {
-  //   editorSocket.emitJoinFileRoom(projectId, file.path);
-  // }
   },
 
   updateFileContent: (path, content) => {
@@ -103,24 +97,21 @@ export const useEditorTabStore = create<EditorTabStore>((set, get) => ({
     const projectId = useTreeStructureStore.getState().projectId;
     const editorSocket = useEditorSocketStore.getState();
     const userId = useUserStore.getState().userId;
-    
 
     if (!projectId) return;
 
-     editorSocket.emitLeaveFileRoom(projectId, path);
+    // Leave file room and release lock if held
+    editorSocket.emitLeaveFileRoom(projectId, path);
 
-    //Remoce the file lock if it exists
     const lockedBy = useFileLockStore.getState().lockedBy[path];
-      
     if (lockedBy === userId) {
-  editorSocket.emitSocketEvent("releaseLock", {
-    filePath: path,
-    projectId,
-  });
-}
+      editorSocket.emitSocketEvent("unlockFile", {
+        filePath: path,
+        projectId,
+      });
+    }
 
     if (activePath === path) {
-      // If there's another tab, switch to it
       const next = remainingTabs[0];
       if (next) {
         useActiveFileTabStore.getState().setActiveFileTab({
@@ -128,17 +119,14 @@ export const useEditorTabStore = create<EditorTabStore>((set, get) => ({
           value: next.content,
           extension: next.extension,
         });
-
-        editorSocket.emitJoinFileRoom(projectId, next.path);
         set({ activePath: next.path });
       } else {
         useActiveFileTabStore.getState().clearActiveFileTab();
-        useFileRoomMembersStore.getState().clearFileRoomUsers();
+        useFileRoomMembersStore.getState().clearFileRoomUsers(path);
         set({ activePath: null });
-
-         if (typeof window !== "undefined") {
-        window.__lastJoinedFilePath = null;
-      }
+        if (typeof window !== "undefined") {
+          window.__lastJoinedFilePath = null;
+        }
       }
     }
 

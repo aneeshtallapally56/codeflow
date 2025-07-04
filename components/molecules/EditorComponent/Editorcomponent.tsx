@@ -7,7 +7,6 @@ import { useActiveFileTabStore } from "@/lib/store/activeFileTabStore";
 import { useUserStore } from "@/lib/store/userStore";
 import { useEditorTabStore } from "@/lib/store/editorTabStores";
 import { useFileLockStore } from "@/lib/store/fileLockStore";
-import { useFileRoomMembersStore } from "@/lib/store/fileRoomMemberStore";
 
 declare global {
   interface Window {
@@ -16,18 +15,27 @@ declare global {
 }
 
 export default function EditorComponent() {
-  
   const updateFileContent = useEditorTabStore((state) => state.updateFileContent);
-  const { editorSocket, emitJoinFileRoom, emitLeaveFileRoom, emitSocketEvent } = useEditorSocketStore();
+  const { editorSocket, emitSocketEvent } = useEditorSocketStore();
   const { userId } = useUserStore();
   const { activeFileTab } = useActiveFileTabStore();
   const { lockedBy } = useFileLockStore();
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
+  const currentFilePathRef = useRef<string>("");
 
   const currentFilePath = activeFileTab?.path || "";
   const projectId = extractProjectId(currentFilePath);
+
+  // Update ref when active file changes
+  useEffect(() => {
+    currentFilePathRef.current = currentFilePath;
+  }, [currentFilePath]);
+
+  // 🔒 Lock status
+  const currentLock = lockedBy[currentFilePath];
+  const isLockedByMe = currentLock === userId;
+  const isLockedByOther = currentLock && currentLock !== userId;
 
   // 🧠 Extract project ID from full path
   function extractProjectId(fullPath: string) {
@@ -36,80 +44,59 @@ export default function EditorComponent() {
     return index !== -1 && segments[index + 1] ? segments[index + 1] : "";
   }
 
-  // 🔒 Lock status
-  const currentLock = lockedBy[currentFilePath];
-  const isLockedByMe = currentLock === userId;
-  const isLockedByOther = currentLock && currentLock !== userId;
-  const isUnlocked = !currentLock;
-
-  // 🔁 Handle switching between files
-    useEffect(() => {
-    if (!editorSocket || !currentFilePath || !projectId) return;
-
-    const prevPath = window.__lastJoinedFilePath;
-
-    // Leave previous file room if needed
-    if (prevPath && prevPath !== currentFilePath) {
-      const prevProjectId = extractProjectId(prevPath);
-      emitLeaveFileRoom(prevProjectId, prevPath);
-    }
-
-    // Always rejoin the room and clear previous file members
-    useFileRoomMembersStore.getState().clearFileRoomUsers();
-    emitJoinFileRoom(projectId, currentFilePath);
-    window.__lastJoinedFilePath = currentFilePath;
-
-    return () => {
-      emitLeaveFileRoom(projectId, currentFilePath);
-      window.__lastJoinedFilePath = null;
-    };
-  }, [currentFilePath, editorSocket]);
-
   // 📝 Handle user typing in editor
   function handleChange(value: string | undefined) {
-    if (!editorSocket || !currentFilePath || !projectId || !activeFileTab || !value) return;
+    if (!editorSocket || !currentFilePath || !projectId || !activeFileTab || value == null) return;
     if (value.trim() === "// No file selected") return;
 
-    const currentLock = lockedBy[currentFilePath];
-    
-    // If unlocked, try to lock it
+    const currentLock = useFileLockStore.getState().lockedBy[currentFilePath];
+
     if (!currentLock) {
       emitSocketEvent("lockFile", {
         filePath: currentFilePath,
         projectId,
         userId,
       });
-      // Continue with the edit - the lock should be granted immediately
     }
-    
-    // Only allow edits if I own the lock or file is unlocked
-    if (currentLock && currentLock !== userId) {
-      return; // Someone else has the lock
-    }
+
+    if (currentLock && currentLock !== userId) return;
 
     updateFileContent(currentFilePath, value);
 
     if (timerRef.current) clearTimeout(timerRef.current);
+    
+    // Capture the current file path and content at the time of the change
+    const filePathAtChange = currentFilePath;
+    const contentAtChange = value;
+    
     timerRef.current = setTimeout(() => {
-      emitSocketEvent("writeFile", {
-        data: value,
-        filePath: currentFilePath,
-        projectId,
-      });
+      // Only emit if we're still on the same file
+      if (currentFilePathRef.current === filePathAtChange) {
+        emitSocketEvent("writeFile", {
+          data: contentAtChange,
+          filePath: filePathAtChange,
+          projectId,
+        });
+      }
     }, 1000);
   }
 
-  // 🧼 Cleanup on component unmount
+  // 🧼 Cleanup timer on unmount and when switching files
   useEffect(() => {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
-      if (currentFilePath && editorSocket) {
-        emitSocketEvent("unlockFile", { projectId, filePath: currentFilePath });
-      }
     };
-  }, [currentFilePath, editorSocket]);
+  }, []);
 
-  // 🧠 Determine language by file extension
+  // Clear timer when switching files
+  useEffect(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  }, [currentFilePath]);
+
+  // 🧠 Determine Monaco language from extension
   function getLanguage(extension: string) {
     const languageMap: Record<string, string> = {
       ".js": "javascript",
@@ -134,8 +121,6 @@ export default function EditorComponent() {
               🔒 Another user is editing this file.
             </div>
           )}
-
-          {/* 🧠 Editor */}
           <Editor
             height="70vh"
             width="100%"
