@@ -20,6 +20,12 @@ interface FileLock {
   filePath: string;
   userId: string;
 }
+interface FileLockRequest {
+  filePath: string;
+  projectId: string;
+  requestedBy: string;
+  requesterUserId: string;
+}
 interface FileOperationEvent {
   filePath: string;
   projectId?: string;
@@ -125,6 +131,35 @@ const handleFileLocked = ({filePath, userId}: FileLock) => {
   console.log("🔒 File locked:", filePath, "by user:", userId);
   setLock(filePath, userId);
 };
+const handleFileLockRequest = ({ filePath, projectId, requestedBy, requesterUserId }:FileLockRequest) => {
+  console.log("🔑 Lock requested for", filePath, "by", requestedBy);
+    const lockedByUser = useFileLockStore.getState().lockedBy[filePath];
+  const currentUserId = useUserStore.getState().userId;
+
+   if (lockedByUser !== currentUserId) return;
+
+  // OPTIONAL: auto-accept (for testing)
+  // editorSocket.emit("transferLock", {
+  //   filePath,
+  //   projectId,
+  //   toUserId: requestedBy,
+  // });
+
+  // SHOW TOAST or UI modal
+  toast.message("Edit request", {
+    description: `User ${requestedBy} wants to edit this file.`,
+    action: {
+      label: "Transfer access",
+      onClick: () => {
+        editorSocket.emit("transferLock", {
+          filePath,
+          projectId,
+          toUserId: requesterUserId,
+        });
+      },
+    },
+  });
+}
     // Error handling
     const handleError = (data: { data: string }) => {
       console.error("❌ Socket error:", data);
@@ -149,6 +184,7 @@ const handleFileLocked = ({filePath, userId}: FileLock) => {
     editorSocket.on("folderCreated", handleFolderCreated);
     editorSocket.on("fileLocked", handleFileLocked);
     editorSocket.on("fileUnlocked", handleFileUnlocked);
+    editorSocket.on("fileLockRequested", handleFileLockRequest);
     
     // File locking - Store updates only (no UI logic)
   
@@ -174,6 +210,7 @@ const handleFileLocked = ({filePath, userId}: FileLock) => {
       editorSocket.off("fileUnlocked", handleFileUnlocked);
       editorSocket.off("fileUnlocked", handleFileUnlocked);
       editorSocket.off("fileLocked", handleFileLocked);
+      editorSocket.off("fileLockRequested", handleFileLockRequest);
       editorSocket.off("error", handleError);
       
       if (process.env.NODE_ENV === 'development') {
