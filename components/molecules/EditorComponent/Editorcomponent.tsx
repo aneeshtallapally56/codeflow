@@ -7,8 +7,16 @@ import { useActiveFileTabStore } from "@/lib/store/activeFileTabStore";
 import { useUserStore } from "@/lib/store/userStore";
 import { useEditorTabStore } from "@/lib/store/editorTabStores";
 import { useFileLockStore } from "@/lib/store/fileLockStore";
+import { useFileRoomMembersStore } from "@/lib/store/fileRoomMemberStore";
+
+declare global {
+  interface Window {
+    __lastJoinedFilePath?: string | null;
+  }
+}
 
 export default function EditorComponent() {
+  
   const updateFileContent = useEditorTabStore((state) => state.updateFileContent);
   const { editorSocket, emitJoinFileRoom, emitLeaveFileRoom, emitSocketEvent } = useEditorSocketStore();
   const { userId } = useUserStore();
@@ -16,7 +24,7 @@ export default function EditorComponent() {
   const { lockedBy } = useFileLockStore();
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const previousPathRef = useRef<string | null>(null);
+
 
   const currentFilePath = activeFileTab?.path || "";
   const projectId = extractProjectId(currentFilePath);
@@ -35,21 +43,26 @@ export default function EditorComponent() {
   const isUnlocked = !currentLock;
 
   // 🔁 Handle switching between files
-  useEffect(() => {
-    const newPath = currentFilePath;
-    const oldPath = previousPathRef.current;
+    useEffect(() => {
+    if (!editorSocket || !currentFilePath || !projectId) return;
 
-    if (editorSocket && newPath && newPath !== oldPath) {
-      const newProjectId = extractProjectId(newPath);
+    const prevPath = window.__lastJoinedFilePath;
 
-      if (oldPath) {
-        const oldProjectId = extractProjectId(oldPath);
-        emitLeaveFileRoom(oldProjectId, oldPath);
-      }
-
-      emitJoinFileRoom(newProjectId, newPath);
-      previousPathRef.current = newPath;
+    // Leave previous file room if needed
+    if (prevPath && prevPath !== currentFilePath) {
+      const prevProjectId = extractProjectId(prevPath);
+      emitLeaveFileRoom(prevProjectId, prevPath);
     }
+
+    // Always rejoin the room and clear previous file members
+    useFileRoomMembersStore.getState().clearFileRoomUsers();
+    emitJoinFileRoom(projectId, currentFilePath);
+    window.__lastJoinedFilePath = currentFilePath;
+
+    return () => {
+      emitLeaveFileRoom(projectId, currentFilePath);
+      window.__lastJoinedFilePath = null;
+    };
   }, [currentFilePath, editorSocket]);
 
   // 📝 Handle user typing in editor
