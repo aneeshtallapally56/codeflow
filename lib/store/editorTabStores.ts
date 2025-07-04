@@ -60,6 +60,8 @@ export const useEditorTabStore = create<EditorTabStore>((set, get) => ({
 
   openFile: (file) => {
     const { openTabs } = get();
+      const projectId = useTreeStructureStore.getState().projectId;
+  const editorSocket = useEditorSocketStore.getState();
     const exists = openTabs.some(tab => tab.path === file.path);
     const updatedTabs = exists ? openTabs : [...openTabs, file];
 
@@ -73,6 +75,9 @@ export const useEditorTabStore = create<EditorTabStore>((set, get) => ({
       openTabs: updatedTabs,
       activePath: file.path,
     });
+      if (projectId) {
+    editorSocket.emitJoinFileRoom(projectId, file.path);
+  }
   },
 
   updateFileContent: (path, content) => {
