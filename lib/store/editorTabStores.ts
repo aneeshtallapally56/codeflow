@@ -3,6 +3,8 @@ import { useActiveFileTabStore } from "./activeFileTabStore";
 import { useTreeStructureStore } from "./treeStructureStore";
 import { useEditorSocketStore } from "./editorSocketStore";
 import { useFileRoomMembersStore } from "./fileRoomMemberStore";
+import { useFileLockStore } from "./fileLockStore";
+import { useUserStore } from "./userStore";
 
 export type FileTab = {
   path: string;
@@ -98,6 +100,16 @@ export const useEditorTabStore = create<EditorTabStore>((set, get) => ({
 
     if (!projectId) return;
 
+    //Remoce the file lock if it exists
+    const lockedBy = useFileLockStore.getState().lockedBy[path];
+const userId = useUserStore.getState().userId;
+
+if (lockedBy === userId) {
+  editorSocket.emitSocketEvent("releaseLock", {
+    filePath: path,
+    projectId,
+  });
+}
     // Always leave file room
     editorSocket.emitLeaveFileRoom(projectId, path);
 
