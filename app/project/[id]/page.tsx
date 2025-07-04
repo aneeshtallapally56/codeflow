@@ -18,6 +18,7 @@ import { useProjectRoomMembersStore } from "@/lib/store/projectRoomMemberStore";
 import { useFileRoomMembersStore } from "@/lib/store/fileRoomMemberStore";
 import PresencePanel from "@/components/organisms/PresencePanel/PresencePanel";
 import { CollaboratorButton } from "@/components/atoms/CollabButton/CollabButton";
+import { BrowserTerminal } from "@/components/molecules/BrowserTerminal/BrowserTerminal";
 
 export default function Page() {
 
@@ -124,6 +125,7 @@ socket.on("initialFileUsers", ({ filePath, users }) => {
         </div>
       </div>
     <CollaboratorButton />
+
     </div>
   );
 }

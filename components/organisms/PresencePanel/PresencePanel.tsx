@@ -36,7 +36,7 @@ export default function CollaboratorPanel() {
   const isFileLockedByOther = currentFileLock && currentFileLock !== currentUserId;
 
   return (
-    <div className="fixed bottom-8 right-4 w-[300px] md:w-80 h-[80vh] bg-[#202020] border border-zinc-700 rounded shadow-lg z-[99] p-4 text-zinc-100">
+    <div className="fixed bottom-8 right-4 w-[300px] md:w-80 h-[80vh] bg-[#202020] border border-zinc-700 rounded shadow-lg  p-4 text-zinc-100">
       {/* Header */}
       <div className="flex justify-between items-center border-b border-zinc-700 pb-2 mb-2">
         <h2 className="text-lg font-semibold">People</h2>
