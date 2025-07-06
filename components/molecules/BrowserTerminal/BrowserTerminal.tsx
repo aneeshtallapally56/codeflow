@@ -1,125 +1,66 @@
-// Client Code (BrowserTerminal.tsx)
-import {Terminal} from "@xterm/xterm";
-import {FitAddon } from "@xterm/addon-fit";
-import "@xterm/xterm/css/xterm.css";
-import { useRef, useEffect } from "react";
-import { io, Socket } from "socket.io-client";
-import type { DefaultEventsMap } from "@socket.io/component-emitter";
-import { useTreeStructureStore } from "@/lib/store/treeStructureStore";
+'use client';
 
-export const BrowserTerminal = ()=>{
-    const projectId = useTreeStructureStore((state) => state.projectId);
-    const terminalRef = useRef<HTMLDivElement>(null);
-    const socket = useRef<Socket<DefaultEventsMap, DefaultEventsMap> | null>(null);
-    const termRef = useRef<Terminal | null>(null);
-    
-    useEffect(() => {
-        const term = new Terminal({
-            cursorBlink: true,
-            fontSize: 14,
-            fontFamily: 'Consolas, "Courier New", monospace',
-            theme: {
-                background: '#1E1E1E',
-                foreground: '#CCCCCC',
-                cursor: '#FFFFFF',
-                cursorAccent: '#000000',
-                selection: '#3A3D41',
-                black: '#000000',
-                red: '#F14C4C',
-                green: '#23D18B',
-                yellow: '#F5F543',
-                blue: '#3B8EEA',
-                magenta: '#D670D6',
-                cyan: '#29B8DB',
-                white: '#E5E5E5',
-                brightBlack: '#666666',
-                brightRed: '#F14C4C',
-                brightGreen: '#23D18B',
-                brightYellow: '#F5F543',
-                brightBlue: '#3B8EEA',
-                brightMagenta: '#D670D6',
-                brightCyan: '#29B8DB',
-                brightWhite: '#E5E5E5'
-            },
-            convertEol: true,
-            scrollback: 1000,
-            allowTransparency: false,
-        });
-        
-        termRef.current = term;
-        
-        if (terminalRef.current) {
-            term.open(terminalRef.current);
+import { useEffect, useRef } from 'react';
+import { Terminal } from '@xterm/xterm';
+import { FitAddon } from '@xterm/addon-fit';
+import {AttachAddon} from '@xterm/addon-attach';
+import '@xterm/xterm/css/xterm.css';
+import { useTreeStructureStore } from '@/lib/store/treeStructureStore';
+import { useEditorSocketStore } from '@/lib/store/editorSocketStore';
+export const BrowserTerminal = () => {
+  const terminalRef = useRef<HTMLDivElement>(null);
+  const socket = useRef<WebSocket | null>(null);
+  const projectId = useTreeStructureStore((state) => state.projectId);
+const emitSocketEvent = useEditorSocketStore((state) => state.emitSocketEvent);
+
+  useEffect(() => {
+    const terminal = new Terminal({
+      fontSize: 14,
+      cursorBlink: true,
+      theme: {
+        background: '#1E1E1E',
+        foreground: '#CCCCCC',
+      },
+    });
+
+    const fitAddon = new FitAddon();
+    terminal.loadAddon(fitAddon);
+
+    if (terminalRef.current) {
+      terminal.open(terminalRef.current);
+
+      setTimeout(() => {
+        try {
+          fitAddon.fit();
+        } catch (e) {
+          console.error('FitAddon error:', e);
         }
-        
-        const fitAddon = new FitAddon();
-        term.loadAddon(fitAddon);
-        
-        // Fit the terminal to container after mounting
-        setTimeout(() => {
-            fitAddon.fit();
-        }, 100);
-        
-        // Handle resize
-        const handleResize = () => {
-            fitAddon.fit();
-        };
-        
-        window.addEventListener('resize', handleResize);
-        
-        // Setup socket connection
-        socket.current = io(`${process.env.NEXT_PUBLIC_BACKEND_URL}/terminal`,{
-            transports: ['websocket'],
-            query: {
-                projectId: projectId
-            }
-        });
-        
-        // Listen for output from server
-        socket.current.on('shell-output', (data) => {
-            console.log('Received output:', data);
-            term.write(data);
-        });
-        
-        // Handle user input
-        term.onData((data) => {
-            console.log('User input:', data);
-            socket.current?.emit('shell-input', {
-                data: data,
-            });
-        });
-        
-        // Handle connection events
-        socket.current.on('connect', () => {
-            console.log('Connected to terminal server');
-        });
-        
-        socket.current.on('disconnect', () => {
-            console.log('Disconnected from terminal server');
-        });
+      }, 0);
+    }
 
-        // Clean up on unmount
-        return () => {
-            term.dispose();
-            if (socket.current) {
-                socket.current.disconnect();
-                socket.current = null;
-            }
-            window.removeEventListener('resize', handleResize);
-            termRef.current = null;
-        };
+    const ws = new WebSocket(`ws://localhost:3002/terminal/?projectId=${projectId}`);
+    socket.current = ws;
 
-    }, [projectId]);
+    ws.onopen = () => {
+      console.log('✅ WebSocket connected');
+      emitSocketEvent('getPort', { projectId });
+      const attachAddon = new AttachAddon(ws);
+      terminal.loadAddon(attachAddon);
+    };
 
-    return (
-        <div 
-            ref={terminalRef} 
-            className="w-full h-[500px] bg-[#1E1E1E] rounded-lg overflow-hidden"
-            style={{
-                // Hide scrollbars but keep functionality
-                scrollbarWidth: 'none',
-                msOverflowStyle: 'none',
-            }}
-        />
-    );
-}
+    ws.onerror = (err) => {
+      console.error('❌ WebSocket error:', err);
+    };
+
+    return () => {
+      terminal.dispose();
+
+      // ✅ Close only if it's connecting or open
+      if (ws.readyState === 0 || ws.readyState === 1) {
+        ws.close();
+      }
+    };
+  }, [projectId, emitSocketEvent]);
+
+  return <div ref={terminalRef} className="w-full h-[500px] bg-[#1E1E1E] rounded-lg" />;
+};
