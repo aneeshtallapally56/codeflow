@@ -18,7 +18,7 @@ import { useProjectRoomMembersStore } from "@/lib/store/projectRoomMemberStore";
 import { useFileRoomMembersStore } from "@/lib/store/fileRoomMemberStore";
 import PresencePanel from "@/components/organisms/PresencePanel/PresencePanel";
 import { CollaboratorButton } from "@/components/atoms/CollabButton/CollabButton";
-import { BrowserTerminal } from "@/components/molecules/BrowserTerminal/BrowserTerminal";
+
 
 export default function Page() {
 
@@ -27,6 +27,7 @@ export default function Page() {
         status?: number;
       };
     }
+
 
   const hasRedirected = useRef(false); 
   const params = useParams();
@@ -68,6 +69,11 @@ const handleForbidden = React.useCallback(
 
     const socket = connectEditorSocket(projectId);
 
+ 
+
+  
+
+
     socket.on("initialUsers", (users) => {
       useProjectRoomMembersStore.getState().setProjectRoomUsers(users);
     });
@@ -80,6 +86,7 @@ socket.on("initialFileUsers", ({ filePath, users }) => {
     });
 
     return () => {
+    
       socket.disconnect();
     };
   }, [projectId, setEditorSocket]);

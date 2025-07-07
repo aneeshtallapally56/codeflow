@@ -3,13 +3,15 @@
 import { TreeNode } from '@/components/molecules/TreeNode/TreeNode';
 import { useTreeStructureStore } from '@/lib/store/treeStructureStore';
 import { useParams } from 'next/navigation';
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
+import isEqual from 'lodash/isEqual';
 
 export default function TreeStructure() {
-  const { treeStructure, setTreeStructure, setProjectId, projectId } = useTreeStructureStore();
+  const { treeStructure, setTreeStructure, setProjectId, projectId , fetchTreeStructure } = useTreeStructureStore();
 
   const rawProjectId = useParams().id;
   const projectId1 = Array.isArray(rawProjectId) ? rawProjectId[0] : rawProjectId;
+   const prevTree = useRef(treeStructure);
 
   useEffect(() => {
     if (projectId1 && projectId !== projectId1) {
@@ -17,6 +19,18 @@ export default function TreeStructure() {
       setTreeStructure();
     }
   }, [projectId1, projectId, setProjectId, setTreeStructure]);
+  useEffect(() => {
+  const interval = setInterval(async () => {
+    if (!projectId1) return;
+    const updatedTree = await fetchTreeStructure(projectId1);
+    if (updatedTree && !isEqual(prevTree.current, updatedTree)) {
+      setTreeStructure(); // this will internally update Zustand
+      prevTree.current = updatedTree;
+    }
+  }, 10000);
+
+  return () => clearInterval(interval);
+}, [projectId1, fetchTreeStructure, setTreeStructure]);
 
   return (
     <div className="h-screen border-r border-gray-700 overflow-y-auto" style={{backgroundColor: '#1E1E1E'}}>

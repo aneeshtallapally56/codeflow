@@ -55,6 +55,7 @@ export const useSocketListeners = () => {
   const { setTreeStructure } = useTreeStructureStore();
   const { openFile } = useEditorTabStore();
   const {setLock} = useFileLockStore();
+  const {setPort} = useUserStore();
 
   const userId = useUserStore((s) => s.userId);
 
@@ -191,12 +192,15 @@ const handleFileLockRequest = ({ filePath, projectId, requestedBy, requesterUser
   
     
     editorSocket.on("error", handleError);
-    
     // Only add debug listener in development
     if (process.env.NODE_ENV === 'development') {
       editorSocket.onAny(handleAnyEvent);
     }
 
+    editorSocket.on('getPortSuccess',({port})=>{
+      console.log("✅ Port received from server:", port);
+      setPort(port);
+    })
     // 🧼 Cleanup on unmount
     return () => {
       editorSocket.off("readFileSuccess", handleReadFileSuccess);

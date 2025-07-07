@@ -32,7 +32,7 @@ export const TerminalDrawer = ()=>{
                     </DrawerHeader>
                     
                     <div className="px-6 flex-1 min-h-0">
-                        <BrowserTerminal />
+                        <BrowserTerminal  />
                     </div>
                     
                     <DrawerFooter className="pt-4 flex-shrink-0">

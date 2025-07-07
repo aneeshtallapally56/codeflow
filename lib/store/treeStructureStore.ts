@@ -15,8 +15,10 @@ type TreeStructureStore = {
   projectId: string | null;
   setProjectId: (projectId: string) => void;
   setTreeStructure: () => Promise<void>;
+    fetchTreeStructure: (projectId: string) => Promise<TreeNode | null>;
    joinProjectRoom: (projectId: string) => void;
   leaveProjectRoom: (projectId: string) => void;
+
 
 };
 
@@ -60,6 +62,18 @@ leaveProjectRoom: (projectId) => {
   if (editorSocket && projectId) {
     console.log(`❌ Leaving file room: ${projectId}`);
     editorSocket.emit("leaveFileRoom", { projectId });
+  }
+},
+fetchTreeStructure: async (projectId: string) => {
+  try {
+    const data = await queryClient.fetchQuery({
+      queryKey: ['project-tree', projectId],
+      queryFn: () => getProjectTree({ projectId }),
+    });
+    return data;
+  } catch (error) {
+    console.error("❌ Failed to fetch project tree:", error);
+    return null;
   }
 },
 }));

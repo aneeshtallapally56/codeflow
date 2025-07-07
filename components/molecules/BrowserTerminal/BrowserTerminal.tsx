@@ -43,7 +43,7 @@ const emitSocketEvent = useEditorSocketStore((state) => state.emitSocketEvent);
 
     ws.onopen = () => {
       console.log('✅ WebSocket connected');
-      emitSocketEvent('getPort', { projectId });
+      emitSocketEvent('getPort',  projectId );
       const attachAddon = new AttachAddon(ws);
       terminal.loadAddon(attachAddon);
     };
