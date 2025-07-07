@@ -12,6 +12,7 @@ import EditorTabs from "@/components/atoms/EditorTabs";
 
 import { useEditorSocketStore } from "@/lib/store/editorSocketStore";
 import { useTreeStructureStore } from "@/lib/store/treeStructureStore";
+import { useTerminalSocketStore } from "@/lib/store/terminalSocketStore";
 import { connectEditorSocket } from "@/lib/socket/editorSocketClient";
 import { useSocketListeners } from "@/lib/utils/useSocketlisteners";
 import { useProjectRoomMembersStore } from "@/lib/store/projectRoomMemberStore";
@@ -34,8 +35,9 @@ export default function Page() {
   const projectId = Array.isArray(params.id) ? params.id[0] : params.id;
 
   const router = useRouter();
-  const { setEditorSocket, editorSocket } = useEditorSocketStore();
+  const { setEditorSocket, editorSocket, emitSocketEvent } = useEditorSocketStore();
   const { setProjectId, joinProjectRoom, setTreeStructure } = useTreeStructureStore();
+  const { setTerminalSocket, setIsConnected } = useTerminalSocketStore();
 
 
   const { project, isLoading, isError, error } = useProjectById(projectId as string);
@@ -63,16 +65,11 @@ const handleForbidden = React.useCallback(
   // ✅ Attach socket listeners
   useSocketListeners();
 
-  // 🔌 Connect socket
+  // 🔌 Connect editor socket
   useEffect(() => {
     if (!projectId) return;
 
     const socket = connectEditorSocket(projectId);
-
- 
-
-  
-
 
     socket.on("initialUsers", (users) => {
       useProjectRoomMembersStore.getState().setProjectRoomUsers(users);
@@ -86,10 +83,42 @@ socket.on("initialFileUsers", ({ filePath, users }) => {
     });
 
     return () => {
-    
       socket.disconnect();
     };
   }, [projectId, setEditorSocket]);
+
+  // 🔌 Connect terminal WebSocket on page render
+  useEffect(() => {
+    if (!projectId) return;
+
+    const ws = new WebSocket(`ws://localhost:3002/terminal/?projectId=${projectId}`);
+    setTerminalSocket(ws);
+
+    ws.onopen = () => {
+      console.log('✅ Terminal WebSocket connected');
+      setIsConnected(true);
+      emitSocketEvent('getPort', projectId);
+    };
+
+    ws.onerror = (err) => {
+      console.error('❌ Terminal WebSocket error:', err);
+      setIsConnected(false);
+    };
+
+    ws.onclose = () => {
+      console.log('🔌 Terminal WebSocket disconnected');
+      setIsConnected(false);
+    };
+
+    return () => {
+      // ✅ Close only if it's connecting or open
+      if (ws.readyState === 0 || ws.readyState === 1) {
+        ws.close();
+      }
+      setTerminalSocket(null);
+      setIsConnected(false);
+    };
+  }, [projectId, emitSocketEvent, setTerminalSocket, setIsConnected]);
 
   // 🔁 Join room + fetch tree when socket connects
   useEffect(() => {

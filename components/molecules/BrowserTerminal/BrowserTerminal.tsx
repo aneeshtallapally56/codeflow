@@ -3,18 +3,21 @@
 import { useEffect, useRef } from 'react';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
-import {AttachAddon} from '@xterm/addon-attach';
+import { AttachAddon } from '@xterm/addon-attach';
 import '@xterm/xterm/css/xterm.css';
+
 import { useTreeStructureStore } from '@/lib/store/treeStructureStore';
-import { useEditorSocketStore } from '@/lib/store/editorSocketStore';
+import { useTerminalSocketStore } from '@/lib/store/terminalSocketStore';
+
 export const BrowserTerminal = () => {
   const terminalRef = useRef<HTMLDivElement>(null);
-  const socket = useRef<WebSocket | null>(null);
+  const terminal = useRef<Terminal | null>(null);
+
   const projectId = useTreeStructureStore((state) => state.projectId);
-const emitSocketEvent = useEditorSocketStore((state) => state.emitSocketEvent);
+  const { terminalSocket, isConnected } = useTerminalSocketStore();
 
   useEffect(() => {
-    const terminal = new Terminal({
+    const term = new Terminal({
       fontSize: 14,
       cursorBlink: true,
       theme: {
@@ -24,43 +27,48 @@ const emitSocketEvent = useEditorSocketStore((state) => state.emitSocketEvent);
     });
 
     const fitAddon = new FitAddon();
-    terminal.loadAddon(fitAddon);
+    term.loadAddon(fitAddon);
+    terminal.current = term;
 
     if (terminalRef.current) {
-      terminal.open(terminalRef.current);
+      term.open(terminalRef.current);
 
-      setTimeout(() => {
+      // Use requestAnimationFrame for better timing
+      requestAnimationFrame(() => {
         try {
           fitAddon.fit();
         } catch (e) {
-          console.error('FitAddon error:', e);
+          console.error('❌ FitAddon error:', e);
         }
-      }, 0);
+      });
     }
 
-    const ws = new WebSocket(`ws://localhost:3002/terminal/?projectId=${projectId}`);
-    socket.current = ws;
+    // Attach WebSocket if it's ready
+    if (terminalSocket && isConnected && terminalSocket.readyState === WebSocket.OPEN) {
+      console.log('✅ Attaching terminal to WebSocket');
+      terminalSocket.binaryType = 'arraybuffer';
 
-    ws.onopen = () => {
-      console.log('✅ WebSocket connected');
-      emitSocketEvent('getPort',  projectId );
-      const attachAddon = new AttachAddon(ws);
-      terminal.loadAddon(attachAddon);
-    };
+      const attachAddon = new AttachAddon(terminalSocket);
+      term.loadAddon(attachAddon);
 
-    ws.onerror = (err) => {
-      console.error('❌ WebSocket error:', err);
-    };
+      term.writeln('');
+  term.writeln('💡 To preview your app, run:');
+  term.writeln('   npm run dev -- --host 0.0.0.0');
+  term.writeln('');
+
+    } else {
+      console.warn('⚠️ Terminal socket not ready for attach');
+    }
 
     return () => {
-      terminal.dispose();
-
-      // ✅ Close only if it's connecting or open
-      if (ws.readyState === 0 || ws.readyState === 1) {
-        ws.close();
-      }
+      term.dispose();
     };
-  }, [projectId, emitSocketEvent]);
+  }, [projectId, terminalSocket, isConnected]);
 
-  return <div ref={terminalRef} className="w-full h-[500px] bg-[#1E1E1E] rounded-lg" />;
+  return (
+    <div
+      ref={terminalRef}
+      className="w-full h-[500px] bg-[#1E1E1E] rounded-lg overflow-hidden"
+    />
+  );
 };
