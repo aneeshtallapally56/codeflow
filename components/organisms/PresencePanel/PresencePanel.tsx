@@ -60,7 +60,7 @@ export default function CollaboratorPanel() {
               key={user.userId}
               userId={user.userId}
               name={isMe ? `${user.username} (You)` : user.username}
-              imageUrl={`https://i.pravatar.cc/${user.userId}`}
+              imageUrl={user.avatarUrl}
               showTransfer={isFileLockedByMe && !isMe}
               showRequest={isMe && isFileLockedByOther}
               onTransferClick={() => {

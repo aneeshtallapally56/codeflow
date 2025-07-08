@@ -4,6 +4,7 @@ import { create } from 'zustand';
 type LiveUser = {
   userId: string;
   username: string;
+  avatarUrl: string;
   socketId: string;
 };
 

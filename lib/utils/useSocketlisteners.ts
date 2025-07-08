@@ -35,7 +35,8 @@ interface UserPresenceEvent {
   userId: string;
   username: string;
   socketId: string;
-  filePath?: string; // Optional for file-specific events
+  filePath?: string; 
+  avatarUrl:string;// Optional for file-specific events
 }
 
 interface FileReadEvent {

@@ -39,7 +39,7 @@ export const ProjectCard = ({
   onDelete
 }: ProjectCardProps) => {
  const formattedDate = new Date(createdAt).toDateString();
-
+  const fallBackAvatar = "https://api.dicebear.com/9.x/bottts-neutral/png?seed=Felix";
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(projectId);
@@ -90,8 +90,8 @@ export const ProjectCard = ({
           {members.map((collabId, index) => (
                 <>
               <Avatar key={index} className="w-[40px] h-[40px]  ">
-                        <AvatarImage src={collabId.avatarUrl} alt={collabId.username} />
-                 <AvatarFallback className="bg-[#050505] text-white text-sm  ">{collabId.username?.slice(0, 2).toUpperCase()}</AvatarFallback>
+                        <AvatarImage src={collabId.avatarUrl||fallBackAvatar} alt={collabId.username} />
+                 
                  
             </Avatar>
             
@@ -111,9 +111,9 @@ export const ProjectCard = ({
           <div className="flex items-center py-1">
             <span className="text-zinc-500 pr-1">By </span>
             <Avatar className="w-[25px] h-[25px]">
-                <AvatarImage src={user.avatarUrl} alt={user.username} />
-              <AvatarFallback className="bg-[#050505] text-white text-xs ">{user?.username?.slice(0, 2).toUpperCase()}</AvatarFallback>
-            </Avatar>
+                <AvatarImage src={user.avatarUrl||fallBackAvatar} alt={user.username} />
+             
+                 </Avatar>
           </div>
         </div>
 

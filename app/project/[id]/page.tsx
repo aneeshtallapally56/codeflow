@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect , useRef} from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useProjectById } from "@/hooks/api/queries/useProjectById";
 import { toast } from "sonner";
@@ -19,18 +19,16 @@ import { useProjectRoomMembersStore } from "@/lib/store/projectRoomMemberStore";
 import { useFileRoomMembersStore } from "@/lib/store/fileRoomMemberStore";
 import PresencePanel from "@/components/organisms/PresencePanel/PresencePanel";
 import { CollaboratorButton } from "@/components/atoms/CollabButton/CollabButton";
-
+import { JLoader } from "@/components/atoms/JLoader/JLoader";
 
 export default function Page() {
+  interface ErrorWithResponse {
+    response?: {
+      status?: number;
+    };
+  }
 
-   interface ErrorWithResponse {
-      response?: {
-        status?: number;
-      };
-    }
-
-
-  const hasRedirected = useRef(false); 
+  const hasRedirected = useRef(false);
   const params = useParams();
   const projectId = Array.isArray(params.id) ? params.id[0] : params.id;
 
@@ -39,24 +37,27 @@ export default function Page() {
   const { setProjectId, joinProjectRoom, setTreeStructure } = useTreeStructureStore();
   const { setTerminalSocket, setIsConnected } = useTerminalSocketStore();
 
+  // Add loading states
+  const [isSocketConnecting, setIsSocketConnecting] = useState(true);
+  const [isTreeStructureLoading, setIsTreeStructureLoading] = useState(true);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   const { project, isLoading, isError, error } = useProjectById(projectId as string);
 
-const handleForbidden = React.useCallback(
-  (message: string) => {
-    if (!hasRedirected.current) {
-      hasRedirected.current = true;
-      toast.error(message);
-      router.push("/projects");
-    }
-  },
-  [router]
-);
+  const handleForbidden = React.useCallback(
+    (message: string) => {
+      if (!hasRedirected.current) {
+        hasRedirected.current = true;
+        setIsRedirecting(true);
+        toast.error(message);
+        router.push("/projects");
+      }
+    },
+    [router]
+  );
 
   // 🛡️ Redirect if unauthorized
   useEffect(() => {
-   
-
     if (isError && (error as ErrorWithResponse)?.response?.status === 403) {
       handleForbidden("You're not a collaborator. Join the project to access it.");
     }
@@ -69,17 +70,24 @@ const handleForbidden = React.useCallback(
   useEffect(() => {
     if (!projectId) return;
 
+    setIsSocketConnecting(true);
     const socket = connectEditorSocket(projectId);
 
     socket.on("initialUsers", (users) => {
       useProjectRoomMembersStore.getState().setProjectRoomUsers(users);
     });
-socket.on("initialFileUsers", ({ filePath, users }) => {
-  useFileRoomMembersStore.getState().setUsersForFile(filePath, users);
-});
+
+    socket.on("initialFileUsers", ({ filePath, users }) => {
+      useFileRoomMembersStore.getState().setUsersForFile(filePath, users);
+    });
 
     socket.on("connect", () => {
       setEditorSocket(socket);
+      setIsSocketConnecting(false);
+    });
+
+    socket.on("disconnect", () => {
+      setIsSocketConnecting(true);
     });
 
     return () => {
@@ -122,46 +130,62 @@ socket.on("initialFileUsers", ({ filePath, users }) => {
 
   // 🔁 Join room + fetch tree when socket connects
   useEffect(() => {
-    if (!projectId || !editorSocket?.connected|| isLoading ||
-    isError ||
-    !project) return;
+    if (!projectId || !editorSocket?.connected || isLoading || isError || !project) return;
 
     setProjectId(projectId);
     joinProjectRoom(projectId);
-   
-  setTreeStructure().catch((error: ErrorWithResponse) => {
-    if (error?.response?.status === 403) {
-     handleForbidden("You're not a collaborator. Join the project to access it.");
-    }
-  });
+    
+    setIsTreeStructureLoading(true);
+    setTreeStructure()
+      .then(() => {
+        setIsTreeStructureLoading(false);
+      })
+      .catch((error: ErrorWithResponse) => {
+        setIsTreeStructureLoading(false);
+        if (error?.response?.status === 403) {
+          handleForbidden("You're not a collaborator. Join the project to access it.");
+        }
+      });
   }, [editorSocket, projectId, joinProjectRoom, setProjectId, setTreeStructure, router, handleForbidden, isError, isLoading, project]);
+
+  // Check if we should show loading
+  const shouldShowLoader = 
+    !projectId || 
+    isLoading || 
+    isSocketConnecting || 
+    isTreeStructureLoading || 
+    isRedirecting ||
+    (!project && !isError);
 
   if (!projectId) {
     return <div className="text-red-500 p-4">Invalid or missing project ID</div>;
   }
 
-  if (isLoading) {
-    return <div className="text-white p-4">Loading project...</div>;
+  // Show JLoader for all loading states
+  if (shouldShowLoader) {
+    return <JLoader />;
   }
+
+  // Don't render anything if we're about to redirect due to 403
   if (isError && (error as ErrorWithResponse)?.response?.status === 403) {
-  return null; // 
-}
+    return null;
+  }
+
   return (
     <div className="w-full h-full bg-[#121212] flex flex-col md:px-16 px-4 py-6 min-w-0">
-      <div className="h-full  ">
-         <TopBar />
-         <div className="relative">
-        <section className=" w-[70vw] h-[70vh]">
-          <EditorTabs />
-        <div className="flex-1 min-h-0 overflow-hidden mt-4">
-          <Editorcomponent />
-        </div>
-        </section>
-        <PresencePanel />
+      <div className="h-full">
+        <TopBar />
+        <div className="relative">
+          <section className="w-[70vw] h-[70vh]">
+            <EditorTabs />
+            <div className="flex-1 min-h-0 overflow-hidden mt-4">
+              <Editorcomponent />
+            </div>
+          </section>
+          <PresencePanel />
         </div>
       </div>
-    <CollaboratorButton />
-
+      <CollaboratorButton />
     </div>
   );
 }
