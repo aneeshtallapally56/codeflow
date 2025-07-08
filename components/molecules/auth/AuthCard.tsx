@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 
+import { useUserStore } from "@/lib/store/userStore";
 interface AuthCardProps {
   type: "login" | "signup";
 }
@@ -44,9 +45,22 @@ export function AuthCard({ type }: AuthCardProps) {
       : `${BASE_URL}/api/v1/auth/login`;
 
     try {
-       await axios.post(endpoint, payload, {
+       const res = await axios.post(endpoint, payload, {
         withCredentials: true,
       });
+   const user = res.data?.data?.user;
+
+if (!user?._id) {
+  alert("Login/Signup succeeded, but no user returned.");
+  return;
+}
+      useUserStore.getState().setUser({
+  userId: user._id,
+  username: user.username,
+  email: user.email,
+  avatarUrl: user.avatarUrl,
+});
+
       router.push("/projects");
     } catch (err: any) {
       const message =

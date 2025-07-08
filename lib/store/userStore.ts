@@ -1,25 +1,32 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
+type User = {
+  userId: string;
+  username?: string;
+  email: string;
+  avatarUrl?: string;
+};
+
 type UserState = {
-  userId: string | null;
-  username: string | null;
+  user: User | null;
   port: number | null;
-  setUser: (userId: string, username: string) => void;
+  setUser: (user: User) => void;
+  clearUser: () => void;
   setPort: (port: number) => void;
 };
 
 export const useUserStore = create<UserState>()(
   persist(
     (set) => ({
-      userId: null,
-      username: null,
-      port: null, 
-      setUser: (userId, username) => set({ userId, username }),
+      user: null,
+      port: null,
+      setUser: (user) => set({ user }),
+      clearUser: () => set({ user: null }),
       setPort: (port) => set({ port }),
     }),
     {
-      name: "user-storage",
+      name: "user-storage", // persists in localStorage
     }
   )
 );

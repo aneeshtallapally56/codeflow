@@ -1,6 +1,6 @@
 'use client'
 import React from 'react'
-import Navbar from '../molecules/Navbar'
+import {Navbar} from '../molecules/Navbar'
 import HeroCTA from '../atoms/HeroCTA'
 
 export default function HomeTemplate() {
@@ -26,7 +26,7 @@ export default function HomeTemplate() {
       {/* Description */}
       <p className="text-zinc-500 md:text-lg mb-12 max-w-2xl mx-auto">
         Supercharge your collaborative development with real-time AI assistance, instant debugging, and seamless teamwork — all in one powerful platform.<br/>
-        Built and crafted with precision by Aneesh Tallapally. See his Portfolio
+        Built and crafted with precision by Aneesh Tallapally. See his <a href="https://aneesht.vercel.app/" target="_blank" rel="noopener noreferrer" className='underline text-white'>Portfolio</a>
       </p>
 
       {/* CTA Button */}

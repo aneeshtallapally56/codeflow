@@ -4,6 +4,7 @@ import QueryProvider from '../providers/QueryProvider';
 import "./globals.css";
 import { Toaster } from "sonner";
 
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],

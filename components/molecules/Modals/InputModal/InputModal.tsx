@@ -21,7 +21,7 @@ import {
 import { useForm } from "react-hook-form";
 import { useCreateProject } from "@/hooks/api/mutations/useCreateProject";
 import { toast } from "sonner";
-import { DialogTitle } from "@radix-ui/react-dialog";
+import { DialogOverlay, DialogTitle } from "@radix-ui/react-dialog";
 import { useEffect } from "react";
 import { CheckCircle, XCircle } from "lucide-react";
 
@@ -76,6 +76,7 @@ export const InputModal = ({ open, onOpenChange }: InputModalProps) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogOverlay className="fixed inset-0 z-40 bg-black/60 backdrop-blur-[2px]" />
       <DialogContent
         className="fixed left-1/2 top-1/2 z-50 grid w-[280px] md:w-[425px] max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 border border-zinc-800 bg-gradient-to-br from-[#101010] to-[#151515] p-6 shadow-lg duration-200 sm:rounded-lg"
       >
