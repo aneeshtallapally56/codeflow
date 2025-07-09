@@ -1,5 +1,5 @@
 import {  Copy, CopyCheck, Trash2 } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar } from "@/components/ui/avatar";
 import Link from "next/link";
 import { AvatarImage } from "@radix-ui/react-avatar";
 import { toast } from "sonner";
