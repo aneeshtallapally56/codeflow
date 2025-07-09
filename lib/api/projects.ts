@@ -83,3 +83,14 @@ try {
   }
 
 };
+export const leaveProject = async (projectId: string) => {
+  try {
+    const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+    const endpoint = `${BASE_URL}/api/v1/projects/leave`;
+    const res = await axiosInstance.post(endpoint, { projectId });
+    console.log("Project left:", res.data);
+  } catch (error) {
+    console.error("Error leaving project:", error);
+    throw error;
+  }
+}

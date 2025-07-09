@@ -11,6 +11,7 @@ import { useProjects } from "@/hooks/api/queries/useProjects";
 
 import { JoinModal } from "./Modals/JoinModal/JoinModal";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useLeaveProject } from "@/hooks/api/mutations/useLeaveProject";
 
 interface Project {
   _id: string;
@@ -28,7 +29,8 @@ interface Project {
 }
 
 export default function ProjectsSection() {
-  const { deleteProjectMutation } = useDeleteProject();
+  const { deleteProjectMutation  } = useDeleteProject();
+  const {leaveProjectMutation } = useLeaveProject();
 
   const { isLoading, isError, projects } = useProjects();
  
@@ -71,9 +73,16 @@ export default function ProjectsSection() {
   };
   const handleDeleteProject = async (projectId: string) => {
     try {
-      await deleteProjectMutation(projectId); // pass the project ID
+      await deleteProjectMutation(projectId); 
     } catch (error) {
       console.error("Failed to delete project:", error);
+    }
+  };
+  const handleLeaveProject = async (projectId: string) => {
+    try {
+      await leaveProjectMutation(projectId); 
+    } catch (error) {
+      console.error("Failed to leave project:", error);
     }
   };
 
@@ -139,7 +148,9 @@ export default function ProjectsSection() {
           ) : (
             projects.map((project: Project) => (
               <ProjectCard
+                onLeave={handleLeaveProject}
                 onDelete={handleDeleteProject}
+                
                 key={project._id}
                 title={project.title}
                 createdAt={project.createdAt}
