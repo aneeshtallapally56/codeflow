@@ -1,3 +1,4 @@
+import { useRouter } from "next/navigation";
 import {
   Check,
   Copy,
@@ -64,7 +65,8 @@ export const ProjectCard = ({
   const fallBackAvatar =
     "https://api.dicebear.com/9.x/bottts-neutral/png?seed=Felix";
   const currentUser = useUserStore((state) => state.user);
-
+  const router = useRouter();
+const [isOpening, setIsOpening] = useState(false);
   const isOwner = user._id === currentUser?.userId;
   const action = isOwner ? "Delete" : "Leave";
   const toastMessage = isOwner
@@ -115,6 +117,11 @@ export const ProjectCard = ({
     }
   };
 
+
+const handleOpen = () => {
+  setIsOpening(true);
+  router.push(`/project/${projectId}`);
+};
   return (
     <div className="bg-gradient-to-b from-[#101010] to-[#121212] border border-zinc-800 p-4 rounded-lg text-zinc-300 w-[300px] md:w-[360px]">
       <div className="flex justify-between items-center mb-2">
@@ -213,11 +220,20 @@ export const ProjectCard = ({
           </div>
         </div>
 
-        <Link href={`/project/${projectId}`}>
-          <button className="inline-flex items-center gap-2 text-sm font-medium border border-blue-500 text-blue-500 hover:bg-blue-950 opacity-70 hover:opacity-100 bg-transparent shadow-sm h-10 px-4 py-2 rounded-md">
-            Open
-          </button>
-        </Link>
+        <button
+  onClick={handleOpen}
+  disabled={isOpening}
+  className="inline-flex items-center gap-2 text-sm font-medium border border-blue-500 text-blue-500 hover:bg-blue-950 opacity-70 hover:opacity-100 bg-transparent shadow-sm h-10 px-4 py-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed disabled:grayscale"
+>
+  {isOpening ? (
+    <>
+      <LoaderCircle className="w-4 h-4 animate-spin" />
+      Opening...
+    </>
+  ) : (
+    "Open"
+  )}
+</button>
       </div>
     </div>
   );

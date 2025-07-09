@@ -1,7 +1,7 @@
 import { getProjectById } from '@/lib/api/projects';
 import {useQuery} from '@tanstack/react-query';
 
-export const useProjectById = (projectId: string) => {
+export const useProjectById = (projectId: string | undefined) => {
   const {
     isLoading,
     isError,

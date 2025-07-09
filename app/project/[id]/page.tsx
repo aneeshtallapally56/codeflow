@@ -6,7 +6,7 @@ import { useProjectById } from "@/hooks/api/queries/useProjectById";
 import { toast } from "sonner";
 
 import Editorcomponent from "@/components/molecules/EditorComponent/Editorcomponent";
-import { TopBar } from "@/components/organisms/TopBar";
+import EditorHeader, { TopBar } from "@/components/organisms/EditorHeader";
 
 import EditorTabs from "@/components/atoms/EditorTabs";
 
@@ -174,7 +174,7 @@ export default function Page() {
   return (
     <div className="w-full h-full bg-[#121212] flex flex-col md:px-16 px-4 py-6 min-w-0">
       <div className="h-full">
-        <TopBar />
+        <EditorHeader/>
         <div className="relative">
           <section className="w-[70vw] h-[70vh]">
             <EditorTabs />
