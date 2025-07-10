@@ -7,6 +7,8 @@ import { useActiveFileTabStore } from "@/lib/store/activeFileTabStore";
 import { useUserStore } from "@/lib/store/userStore";
 import { useEditorTabStore } from "@/lib/store/editorTabStores";
 import { useFileLockStore } from "@/lib/store/fileLockStore";
+import { useFileRoomMembersStore } from "@/lib/store/fileRoomMemberStore";
+
 
 declare global {
   interface Window {
@@ -17,7 +19,7 @@ declare global {
 export default function EditorComponent() {
   const updateFileContent = useEditorTabStore((state) => state.updateFileContent);
   const { editorSocket, emitSocketEvent } = useEditorSocketStore();
-  const { userId } = useUserStore();
+   const userId = useUserStore((s) => s.user?.userId);
   const { activeFileTab } = useActiveFileTabStore();
   const { lockedBy } = useFileLockStore();
 
@@ -27,15 +29,22 @@ export default function EditorComponent() {
   const currentFilePath = activeFileTab?.path || "";
   const projectId = extractProjectId(currentFilePath);
 
+const currentLock = lockedBy[currentFilePath]; // ✅ First: safely define it
+const isLockedByOther = currentLock && currentLock !== userId;
+
+const getUsersForFile = useFileRoomMembersStore((s) => s.getUsersForFile);
+const fileRoomUsers = getUsersForFile(currentFilePath);
+
+
+const lockHolder = fileRoomUsers.find((u) => u.userId === currentLock);
+const lockHolderName = lockHolder?.username || "Someone";
+
   // Update ref when active file changes
   useEffect(() => {
     currentFilePathRef.current = currentFilePath;
   }, [currentFilePath]);
 
-  // 🔒 Lock status
-  const currentLock = lockedBy[currentFilePath];
-  const isLockedByMe = currentLock === userId;
-  const isLockedByOther = currentLock && currentLock !== userId;
+
 
   // 🧠 Extract project ID from full path
   function extractProjectId(fullPath: string) {
@@ -55,7 +64,6 @@ export default function EditorComponent() {
       emitSocketEvent("lockFile", {
         filePath: currentFilePath,
         projectId,
-        userId,
       });
     }
 
@@ -118,7 +126,7 @@ export default function EditorComponent() {
         <>
           {isLockedByOther && (
             <div className="bg-red-100 text-red-900 text-sm p-2 px-3">
-              🔒 Another user is editing this file.
+              🔒 {lockHolderName} is editing this file.
             </div>
           )}
           <Editor

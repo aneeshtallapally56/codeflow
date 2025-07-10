@@ -26,7 +26,7 @@ export const TerminalDrawer = ()=>{
     return (
         <Drawer>
             <Tooltip delayDuration={100} >
-            <TooltipTrigger>
+            <TooltipTrigger asChild>
             <DrawerTrigger asChild>
                 <Button variant="outline" className="text-zinc-500 hover:text-zinc-400 text-base transition-all ease-out duration-300 hover:bg-inherit  border-zinc-500 hover:border-zinc-400 "  ><Terminal /></Button>
             </DrawerTrigger>

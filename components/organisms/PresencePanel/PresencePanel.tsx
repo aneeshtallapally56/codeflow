@@ -20,21 +20,24 @@ export default function CollaboratorPanel() {
 
   const fileRoomUsers = useFileRoomUsers(currentFilePath);
   const projectRoomUsers = useProjectRoomMembersStore((state) => state.projectRoomUsers);
-  const currentUserId = useUserStore((state) => state.userId);
+  const currentUserId = useUserStore((state) => state.user?.userId);
+  const defaultAvatarUrl = "https://api.dicebear.com/9.x/bottts-neutral/png?seed=Felix";
 
   const extractProjectId = (fullPath: string) => {
     const segments = fullPath.split("/");
     const index = segments.indexOf("generated-projects");
     return index !== -1 && segments[index + 1] ? segments[index + 1] : "";
   };
+  console.log("projectroommembers", projectRoomUsers);
 
   const projectId = useMemo(() => extractProjectId(currentFilePath), [currentFilePath]);
 
   // Get who has the lock on the current file
+  
   const currentFileLock = lockedBy[currentFilePath];
   const isFileLockedByMe = currentFileLock === currentUserId;
   const isFileLockedByOther = currentFileLock && currentFileLock !== currentUserId;
-
+  console.log("Project room memebers",projectRoomUsers);
   return (
     <div className="fixed bottom-8 right-4 w-[300px] md:w-80 h-[80vh] bg-[#202020] border border-zinc-700 rounded shadow-lg  p-4 text-zinc-100">
       {/* Header */}
@@ -51,46 +54,59 @@ export default function CollaboratorPanel() {
       {/* File Members */}
       <div className="text-sm text-zinc-300 capitalize mt-3">file members</div>
       <div className="flex flex-col gap-1 pt-3 h-40 md:h-44 overflow-y-auto">
-        {fileRoomUsers.map((user) => {
-          const isMe = user.userId === currentUserId;
-          const isThisUserLockingTheFile = currentFileLock === user.userId;
+      {fileRoomUsers.map((user) => {
+  const isMe = user.userId === currentUserId;
+  const isThisUserLockingTheFile = currentFileLock === user.userId;
 
-          return (
-            <UserCard
-              key={user.userId}
-              userId={user.userId}
-              name={isMe ? `${user.username} (You)` : user.username}
-              imageUrl={user.avatarUrl}
-              showTransfer={isFileLockedByMe && !isMe}
-              showRequest={isMe && isFileLockedByOther}
-              onTransferClick={() => {
-                emitSocketEvent("transferLock", {
-                  filePath: currentFilePath,
-                  projectId,
-                  toUserId: user.userId,
-                });
-              }}
-              onRequestClick={() => {
-                emitSocketEvent("requestLock", {
-                  filePath: currentFilePath,
-                  projectId,
-                  fromUserId: currentUserId,
-                });
-              }}
-            />
-          );
-        })}
+  const showTransfer = isFileLockedByMe && !isMe;
+  const showRequest = !isFileLockedByMe && isThisUserLockingTheFile && !isMe;
+console.log("Debug for user:", user.username, "ID:", user.userId, {
+  currentUserId,
+  currentFileLock,
+  isFileLockedByMe,
+  isMe,
+  isThisUserLockingTheFile,
+  showTransfer,
+  showRequest
+});
+  return (
+    <UserCard
+      key={user.userId}
+      userId={user.userId}
+      name={isMe ? `${user.username} (You)` : user.username}
+      imageUrl={user.avatarUrl}
+      showTransfer={showTransfer}
+      showRequest={showRequest}
+      onTransferClick={() => {
+        emitSocketEvent("transferLock", {
+          filePath: currentFilePath,
+          projectId,
+          toUserId: user.userId,
+        });
+      }}
+      onRequestClick={() => {
+        emitSocketEvent("requestLock", {
+          filePath: currentFilePath,
+          projectId,
+
+        });
+      }}
+    />
+  );
+})}
       </div>
 
       {/* Project Members */}
+      
       <div className="text-sm text-zinc-300 capitalize mt-3">project members</div>
+      
       <div className="flex flex-col gap-1 pt-3 h-24 md:h-44 overflow-y-auto">
         {projectRoomUsers.map((user) => (
           <UserCard
             key={user.userId}
             userId={user.userId}
             name={user.userId === currentUserId ? `${user.username} (You)` : user.username}
-            imageUrl={`https://i.pravatar.cc/${user.userId}`}
+            imageUrl={user.avatarUrl||defaultAvatarUrl}
           />
         ))}
       </div>
