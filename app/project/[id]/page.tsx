@@ -21,6 +21,8 @@ import PresencePanel from "@/components/organisms/PresencePanel/PresencePanel";
 import { CollaboratorButton } from "@/components/atoms/CollabButton/CollabButton";
 import { JLoader } from "@/components/atoms/JLoader/JLoader";
 
+import { useAiLoadingStore } from "@/lib/store/aiLoadingStore";
+
 export default function Page() {
   interface ErrorWithResponse {
     response?: {
@@ -157,13 +159,20 @@ export default function Page() {
     isRedirecting ||
     (!project && !isError);
 
+const { isFixing, isGenerating } = useAiLoadingStore();
   if (!projectId) {
     return <div className="text-red-500 p-4">Invalid or missing project ID</div>;
   }
 
   // Show JLoader for all loading states
   if (shouldShowLoader) {
-    return <JLoader />;
+    return <JLoader text={'Joining'}/>;
+  }
+  if(isFixing){
+    return <JLoader text={'Fixing'}/>;
+  }
+  if(isGenerating){
+    return <JLoader text={'Generating'}/>;
   }
 
   // Don't render anything if we're about to redirect due to 403
@@ -172,6 +181,7 @@ export default function Page() {
   }
 
   return (
+    
     <div className="w-full h-full bg-[#121212] flex flex-col md:px-16 px-4 py-6 min-w-0">
       <div className="h-full">
         <EditorHeader/>

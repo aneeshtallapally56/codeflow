@@ -224,6 +224,8 @@ color: "white",
     const handleUserJoinedProject = (user: UserPresenceEvent) => {
       console.log("👥 User joined project:", user);
       addProjectRoomUser(user);
+     
+
     };
 
     const handleUserLeftProject = ({ socketId }: { userId: string; socketId: string }) => {

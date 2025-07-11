@@ -14,17 +14,28 @@ import {
 
 import { useProjectById } from "@/hooks/api/queries/useProjectById";
 import { useParams } from "next/navigation";
-import { toast } from "sonner";
+
 import { useState } from "react";
 import { TerminalDrawer } from "./DrawerForTerm/TerminalDrawer";
 import { useUserStore } from "@/lib/store/userStore";
+import { GenerateModal } from "../molecules/Modals/GenerateModal/GenerateModal";
+import { useActiveFileTabStore } from "@/lib/store/activeFileTabStore";
+import {  useFixCode } from "@/hooks/api/mutations/useAi";
+
+
 export default function EditorHeader() {
   const params = useParams();
   const projectId = Array.isArray(params.id) ? params.id[0] : params.id; // Assuming you get the project ID from the URL params
   const { project } = useProjectById(projectId);
-
+  const activeFileTab = useActiveFileTabStore((s) => s.activeFileTab);
+  const isValid = activeFileTab && activeFileTab.value.trim().length > 0;
+  const [isGenerateOpen , setIsGenerateOpen] = useState(false);
  const router = useRouter();
  const [isLeaving , setIsLeaving] = useState(false);
+
+ const {fixCode , isPending } = useFixCode();
+
+
  const handleLeave = ()=>{
 try {
   setIsLeaving(true);
@@ -43,8 +54,23 @@ finally{
   const url = `http://localhost:${port}`;
   window.open(url, '_blank');
 }
+function handleGenerateOpen(){
+setIsGenerateOpen((prev) => !prev);
+}
+
+const handleFixCode = async()=>{
+try {
+  const code = activeFileTab?.value ?? "";
+  await fixCode(code );
+} catch (error) {
+  console.error("Error fixing code:", error);
+}
+}
   return (
     <div className="w-full flex justify-between items-center pt-4 flex-wrap">
+       <GenerateModal
+              open={isGenerateOpen} onOpenChange={setIsGenerateOpen}
+              />
       <div className="flex gap-4 flex-wrap justify-between w-full items-center lg:pb-12 pb-4">
         {/* Left Section: Leave Button + Project Info */}
         <div className="flex items-center gap-4">
@@ -81,6 +107,8 @@ finally{
           <TerminalDrawer   />
           <Button
             variant="outline"
+            onClick={handleGenerateOpen}
+            disabled={!isValid}
             className="border-purple-600 bg-transparent hover:bg-gradient-to-br from-purple-500 to-purple-600 text-purple-600 font-semibold hover:text-zinc-300"
           >
             <Wand2 className="w-4 h-4 mr-2" />
@@ -89,6 +117,8 @@ finally{
 
           <Button
             variant="outline"
+            disabled={!isValid}
+            onClick = {handleFixCode}
             className="border-blue-500 bg-transparent hover:bg-blue-950 text-blue-500 hover:text-blue-500"
           >
             <Wrench className="w-4 h-4 mr-2" />

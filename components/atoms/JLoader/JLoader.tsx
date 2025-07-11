@@ -2,11 +2,15 @@
 
 import styles from './JLoader.module.css';
 
-export function JLoader() {
+type JLoaderProps = {
+  text: string;
+};
+
+export function JLoader({ text }: JLoaderProps) {
   return (
     <div className={styles.backdrop}>
       <div className={styles.loader}></div>
-      <h1 className="text-lg text-white">Joining</h1>
+      <h1 className="text-lg text-white">{text}</h1>
     </div>
   );
 }

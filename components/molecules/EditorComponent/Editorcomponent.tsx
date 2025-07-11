@@ -133,11 +133,12 @@ const lockHolderName = lockHolder?.username || "Someone";
             height="70vh"
             width="100%"
             theme="vs-dark"
+            
             language={getLanguage(activeFileTab.extension || "")}
             value={activeFileTab.value}
             onChange={handleChange}
             options={{
-              fontSize: 16,
+              fontSize: 14,
               fontFamily: "Fira Code, monospace",
               minimap: { enabled: false },
               automaticLayout: true,
