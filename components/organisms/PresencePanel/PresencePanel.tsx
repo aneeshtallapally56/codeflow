@@ -1,6 +1,6 @@
 "use client";
 
-import { Copy, CopyCheck, PlusCircleIcon } from "lucide-react";
+import { Copy, CopyCheck } from "lucide-react";
 
 import { useProjectRoomMembersStore } from "@/lib/store/projectRoomMemberStore";
 import { useUserStore } from "@/lib/store/userStore";
@@ -8,7 +8,7 @@ import { useFileLockStore } from "@/lib/store/fileLockStore";
 import { useActiveFileTabStore } from "@/lib/store/activeFileTabStore";
 import { useEditorSocketStore } from "@/lib/store/editorSocketStore";
 import Image from "next/image";
-import { useMemo } from "react";
+
 import { useFileRoomUsers } from "@/lib/utils/useFileRoomUsers";
 import { toast } from "sonner";
 import { useTreeStructureStore } from "@/lib/store/treeStructureStore";
@@ -29,13 +29,15 @@ export default function CollaboratorPanel() {
 
    const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(projectId);
-      toast("Copied Project ID!", {
-        icon: <CopyCheck className="text-green-500 w-5 h-5" />,
-        className: "toast",
-        unstyled: true,
-      });
-    } catch (err) {
+      if (projectId) {
+        await navigator.clipboard.writeText(projectId);
+        toast("Copied Project ID!", {
+          icon: <CopyCheck className="text-green-500 w-5 h-5" />,
+          className: "toast",
+          unstyled: true,
+        });
+      }
+    } catch {
       toast("Failed to copy", {
         description: "Please try again",
         className: "toast",
@@ -52,7 +54,7 @@ export default function CollaboratorPanel() {
   
   const currentFileLock = lockedBy[currentFilePath];
   const isFileLockedByMe = currentFileLock === currentUserId;
-  const isFileLockedByOther = currentFileLock && currentFileLock !== currentUserId;
+
   console.log("Project room memebers",projectRoomUsers);
   return (
     <div className="fixed bottom-8 right-4 w-[300px] md:w-80 h-[80vh] bg-[#202020] border border-zinc-700 rounded shadow-lg  p-4 text-zinc-100">

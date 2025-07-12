@@ -137,11 +137,11 @@ export default function ProjectsSection() {
               <div>
 
               <p className="text-zinc-500 text-sm mt-2">
-                Time to wake it up with that "New Project" button 
+                Time to wake it up with that &quot;New Project&quot; button 
            
               </p>
               <p className="text-zinc-500 text-sm mt-2">
-                Or Join an existing project with the "Join" button!
+                Or Join an existing project with the &quot;Join&quot; button!
               </p>
               </div>
             </div>

@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
+
 import { AvatarImage } from "@radix-ui/react-avatar";
 import { toast } from "sonner";
 import {
@@ -88,8 +88,7 @@ const [isOpening, setIsOpening] = useState(false);
         className: "toast",
         unstyled: true,
       });
-    } catch (err) {
-      console.error(err);
+    } catch {
       toast(`Failed to ${action}`, {
        
         className: "toast",
@@ -108,7 +107,7 @@ const [isOpening, setIsOpening] = useState(false);
         className: "toast",
         unstyled: true,
       });
-    } catch (err) {
+    } catch {
       toast("Failed to copy", {
         description: "Please try again",
         className: "toast",

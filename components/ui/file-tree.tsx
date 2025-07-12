@@ -44,7 +44,7 @@ const useTree = () => {
   return context
 }
 
-interface TreeViewComponentProps extends React.HTMLAttributes<HTMLDivElement> {}
+type TreeViewComponentProps = React.HTMLAttributes<HTMLDivElement>
 
 type Direction = "rtl" | "ltr" | undefined
 
@@ -134,7 +134,7 @@ const Tree = forwardRef<HTMLDivElement, TreeViewProps>(
       if (initialSelectedId) {
         expandSpecificTargetedElements(elements, initialSelectedId)
       }
-    }, [initialSelectedId, elements])
+    }, [initialSelectedId, elements, expandSpecificTargetedElements])
 
     const direction = dir === "rtl" ? "rtl" : "ltr"
 
@@ -203,8 +203,7 @@ const TreeIndicator = forwardRef<
 
 TreeIndicator.displayName = "TreeIndicator"
 
-interface FolderComponentProps
-  extends React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Item> {}
+type FolderComponentProps = React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Item>
 
 type FolderProps = {
   expandedItems?: string[]
@@ -227,13 +226,11 @@ const Folder = forwardRef<
       children,
       ...props
     },
-    ref,
   ) => {
     const {
       direction,
       handleExpand,
       expandedItems,
-      indicator,
       setExpandedItems,
       openIcon,
       closeIcon,
@@ -265,7 +262,7 @@ const Folder = forwardRef<
           <span>{element}</span>
         </AccordionPrimitive.Trigger>
         <AccordionPrimitive.Content className="text-base data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down relative overflow-hidden h-full bg-transparent" style={{ backgroundColor: 'transparent' }}>
-          {element && indicator && <TreeIndicator aria-hidden="true" />}
+          {element && <TreeIndicator aria-hidden="true" />}
           <AccordionPrimitive.Root
             dir={direction}
             type="multiple"
@@ -301,7 +298,6 @@ const File = forwardRef<
     {
       value,
       className,
-      handleSelect,
       isSelectable = true,
       isSelect,
       fileIcon,
@@ -346,7 +342,7 @@ const CollapseButton = forwardRef<
     elements: TreeViewElement[]
     expandAll?: boolean
   } & React.HTMLAttributes<HTMLButtonElement>
->(({ className, elements, expandAll = false, children, ...props }, ref) => {
+>(({ elements, expandAll = false, children, ...props }, ref) => {
   const { expandedItems, setExpandedItems } = useTree()
 
   const expendAllTree = useCallback((elements: TreeViewElement[]) => {
@@ -359,18 +355,17 @@ const CollapseButton = forwardRef<
     }
 
     elements.forEach(expandTree)
-  }, [])
+  }, [setExpandedItems])
 
   const closeAll = useCallback(() => {
     setExpandedItems?.([])
   }, [])
 
   useEffect(() => {
-    console.log(expandAll)
     if (expandAll) {
       expendAllTree(elements)
     }
-  }, [expandAll])
+  }, [expandAll, expendAllTree, elements])
 
   return (
     <Button

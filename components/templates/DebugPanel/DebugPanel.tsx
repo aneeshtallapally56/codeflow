@@ -13,7 +13,7 @@ interface DebugPanelProps {
   isCurrentFileLocked: boolean;
   isLockedByCurrentUser: boolean;
   canEdit: boolean;
-  editorSocket: any;
+  editorSocket: { on: (event: string, callback: (data: unknown) => void) => void; off: (event: string) => void; disconnect: () => void; connect: () => void; connected?: boolean } | null;
   userId: string;
 }
 
@@ -33,7 +33,7 @@ export const DebugPanel: React.FC<DebugPanelProps> = ({
   React.useEffect(() => {
     if (!editorSocket) return;
 
-    const logEvent = (eventName: string, data: any) => {
+    const logEvent = (eventName: string, data: unknown) => {
       const timestamp = new Date().toLocaleTimeString();
       const logEntry = `[${timestamp}] ${eventName}: ${JSON.stringify(data)}`;
       setEventLog(prev => [...prev.slice(-9), logEntry]); // Keep last 10 events
@@ -51,7 +51,7 @@ export const DebugPanel: React.FC<DebugPanelProps> = ({
     ];
 
     events.forEach(event => {
-      editorSocket.on(event, (data: any) => logEvent(event, data));
+      editorSocket.on(event, (data: unknown) => logEvent(event, data));
     });
 
     return () => {

@@ -6,7 +6,7 @@ import { useProjectById } from "@/hooks/api/queries/useProjectById";
 import { toast } from "sonner";
 
 import Editorcomponent from "@/components/molecules/EditorComponent/Editorcomponent";
-import EditorHeader, { TopBar } from "@/components/organisms/EditorHeader";
+import EditorHeader from "@/components/organisms/EditorHeader";
 
 import EditorTabs from "@/components/atoms/EditorTabs";
 

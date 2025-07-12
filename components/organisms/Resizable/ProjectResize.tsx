@@ -1,5 +1,4 @@
-import Editorcomponent from "@/components/molecules/EditorComponent/Editorcomponent"
-import { TestTree } from "@/components/molecules/TestTree/TestTree"
+
 import {
   ResizableHandle,
   ResizablePanel,

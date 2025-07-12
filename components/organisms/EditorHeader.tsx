@@ -7,7 +7,6 @@ import {
 
   Wand2,
   Wrench,
-  ChevronRight,
   LogOut,
   LoaderCircle,
 
@@ -40,7 +39,7 @@ export default function EditorHeader() {
  const router = useRouter();
  const [isLeaving , setIsLeaving] = useState(false);
 
- const {fixCode , isPending } = useFixCode();
+ const {fixCode } = useFixCode();
 
 
  const handleLeave = ()=>{

@@ -65,7 +65,7 @@ export const InputModal = ({ open, onOpenChange }: InputModalProps) => {
 
   // ✅ fixed
   onOpenChange(false);
-    } catch (error) {
+    } catch {
       toast("  Project cant be created!",{
   className:"toast",
   unstyled: true,

@@ -17,7 +17,7 @@ type EditorSocketState = {
   emitLeaveProjectRoom: (projectId: string) => void;
 
   // Future: generic emitter
-  emitSocketEvent: (event: string, payload: any) => void;
+  emitSocketEvent: (event: string, payload: unknown) => void;
 };
 
 export const useEditorSocketStore = create<EditorSocketState>((set, get) => ({

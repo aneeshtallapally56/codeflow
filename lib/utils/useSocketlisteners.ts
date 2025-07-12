@@ -42,10 +42,7 @@ interface FileReadEvent {
   value: string;
   extension: string;
 }
-interface FileWriteEvent {
-  filePath: string;
-  data?: string;
-}
+
 
 export const useSocketListeners = () => {
   const { editorSocket } = useEditorSocketStore();
@@ -89,29 +86,25 @@ export const useSocketListeners = () => {
       });
     };
 
-    const handleWriteFileSuccess = (data: FileWriteEvent) => {
+    const handleWriteFileSuccess = () => {
 
-      editorSocket.emit("readFile", { filePath: data.filePath });
+      editorSocket.emit("readFile", { filePath: "" });
     };
 
-    const handleFileCreated = (data: FileOperationEvent) => {
-
+    const handleFileCreated = () => {
       setTreeStructure();
     };
 
     const handleFileDeleted = (data: FileOperationEvent) => {
-
       setTreeStructure();
       setLock(data.filePath, null);
     };
 
-    const handleFolderCreated = (data: FileOperationEvent) => {
-
+    const handleFolderCreated = () => {
       setTreeStructure();
     };
 
-    const handleFolderDeleted = (data: FileOperationEvent) => {
-
+    const handleFolderDeleted = () => {
       setTreeStructure();
     };
 
@@ -161,9 +154,9 @@ color: "white",
     setLock(filePath, userId);
   }
     }
-    const handleError = (data: { data: string }) => {
-      console.error("❌ Socket error:", data);
-      toast.error(`Error: ${data.data}`);
+    const handleError = () => {
+      console.error("❌ Socket error");
+      toast.error(`Error occurred`);
     };
 
   
@@ -216,11 +209,9 @@ color: "white",
     const handleUserJoinedProject = (user: UserPresenceEvent) => {
 
       addProjectRoomUser(user);
-     
-
     };
 
-    const handleUserLeftProject = ({ socketId }: { userId: string; socketId: string }) => {
+    const handleUserLeftProject = ({ socketId }: { socketId: string }) => {
 
       removeProjectRoomUser(socketId);
     };

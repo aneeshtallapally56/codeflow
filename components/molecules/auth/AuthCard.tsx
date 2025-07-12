@@ -69,9 +69,10 @@ if (!user?._id) {
     unstyled: true,
   icon: <CheckCircle className="text-green-500 w-5 h-5" />,
 });
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } }; message?: string };
       const message =
-        err.response?.data?.message || err.message || "Authentication failed";
+        error.response?.data?.message || error.message || "Authentication failed";
        toast(` ${message} `,{
         
         style:{
