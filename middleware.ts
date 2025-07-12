@@ -14,7 +14,7 @@ export function middleware(request: NextRequest) {
 
   if (!isPublic && !token) {
     console.log("No token found, pathname:", pathname);
-    // return NextResponse.redirect(new URL("/login", request.url));
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
   return NextResponse.next();
