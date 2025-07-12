@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { TokenManager, isAuthenticated } from '@/lib/utils/auth';
 import { useUserStore } from '@/lib/store/userStore';
+import { logout } from '@/lib/api/logout';
 
 export const useAuth = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -32,9 +33,17 @@ export const useAuth = () => {
     checkAuth();
   }, [user, setUser, clearUser]);
 
-  const logout = () => {
-    TokenManager.clearTokens();
-    clearUser();
+  const logout = async () => {
+    try {
+      // Call the logout API to clear server-side session
+      await logout();
+    } catch (error) {
+      console.error('Logout failed:', error);
+    } finally {
+      // Always clear local tokens and user state
+      TokenManager.clearTokens();
+      clearUser();
+    }
   };
 
   return {
