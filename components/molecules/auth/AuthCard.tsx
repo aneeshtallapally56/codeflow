@@ -18,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import Link from "next/link";
 
 import { useUserStore } from "@/lib/store/userStore";
+import { TokenManager } from "@/lib/utils/auth";
 import { toast } from "sonner";
 import { CheckCircle, XCircle } from "lucide-react";
 interface AuthCardProps {
@@ -51,11 +52,18 @@ export function AuthCard({ type }: AuthCardProps) {
         withCredentials: true,
       });
    const user = res.data?.data?.user;
+   const tokens = res.data?.data?.tokens;
 
 if (!user?._id) {
   alert("Login/Signup succeeded, but no user returned.");
   return;
 }
+
+      // Store tokens if provided
+      if (tokens?.accessToken) {
+        TokenManager.setTokens(tokens.accessToken, tokens.refreshToken);
+      }
+
       useUserStore.getState().setUser({
   userId: user._id,
   username: user.username,
@@ -64,7 +72,7 @@ if (!user?._id) {
 });
 
       console.log("Login successful, user set:", user);
-      console.log("Cookies after login:", document.cookie);
+      console.log("Tokens stored:", !!tokens?.accessToken);
       
       router.push("/projects");
        toast("  Signed in successfully!",{

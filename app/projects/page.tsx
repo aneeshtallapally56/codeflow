@@ -4,25 +4,25 @@ import ProjectsSection  from "@/components/molecules/ProjectsSection"
 import { FullPageSpinner } from "@/components/ui/fullPageLoader";
 
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import axiosInstance from "@/lib/config/axios-config";
+import { useAuth } from "@/hooks/auth/useAuth";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 
 export default function Page() {
-   const [loading, setLoading] = useState(true);
-const router = useRouter();
+  const { isAuthenticated, isLoading } = useAuth();
+  const router = useRouter();
+
   useEffect(() => {
-    axiosInstance.get("/api/v1/auth/me")
-      .then((res) => {
-        console.log("User:", res.data);
-        setLoading(false);
-      })
-      .catch(() => {
-        router.push("/login");
-      });
-  }, [router]);
-   if (loading) return <FullPageSpinner />;
+    if (!isLoading && !isAuthenticated) {
+      router.push("/login");
+    }
+  }, [isAuthenticated, isLoading, router]);
+
+  if (isLoading) return <FullPageSpinner />;
+  
+  if (!isAuthenticated) return null;
+
   return (
     <main className="  w-full  bg-[#050505] h-screen">
 

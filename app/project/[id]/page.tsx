@@ -22,7 +22,7 @@ import { CollaboratorButton } from "@/components/atoms/CollabButton/CollabButton
 import { JLoader } from "@/components/atoms/JLoader/JLoader";
 
 import { useAiLoadingStore } from "@/lib/store/aiLoadingStore";
-import axiosInstance from "@/lib/config/axios-config";
+import { useAuth } from "@/hooks/auth/useAuth";
 
 export default function Page() {
   interface ErrorWithResponse {
@@ -44,6 +44,7 @@ export default function Page() {
   const [isSocketConnecting, setIsSocketConnecting] = useState(true);
   const [isTreeStructureLoading, setIsTreeStructureLoading] = useState(true);
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [checkingAuth, setCheckingAuth] = useState(true);
 
   const { project, isLoading, isError, error } = useProjectById(projectId as string);
@@ -59,17 +60,17 @@ export default function Page() {
     },
     [router]
   );
+
   useEffect(() => {
-  axiosInstance.get("/api/v1/auth/me")
-    .then((res) => {
-      console.log("✅ Authenticated user:", res.data);
-      setCheckingAuth(false);
-    })
-    .catch(() => {
-      toast.error("Please log in to access this project.");
-      router.push("/login");
-    });
-}, []);
+    if (!authLoading) {
+      if (!isAuthenticated) {
+        toast.error("Please log in to access this project.");
+        router.push("/login");
+      } else {
+        setCheckingAuth(false);
+      }
+    }
+  }, [isAuthenticated, authLoading, router]);
 
   // 🛡️ Redirect if unauthorized
   useEffect(() => {
