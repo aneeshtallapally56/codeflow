@@ -60,7 +60,7 @@ export default function Page() {
     [router]
   );
   useEffect(() => {
-  axiosInstance.get("/api/auth/me")
+  axiosInstance.get("/api/v1/auth/me")
     .then((res) => {
       console.log("✅ Authenticated user:", res.data);
       setCheckingAuth(false);

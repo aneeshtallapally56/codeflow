@@ -13,7 +13,7 @@ export default function Page() {
    const [loading, setLoading] = useState(true);
 const router = useRouter();
   useEffect(() => {
-    axiosInstance.get("/api/auth/me")
+    axiosInstance.get("/api/v1/auth/me")
       .then((res) => {
         console.log("User:", res.data);
         setLoading(false);
