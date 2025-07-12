@@ -105,7 +105,7 @@ export default function Page() {
     setTerminalSocket(ws);
 
     ws.onopen = () => {
-      console.log('✅ Terminal WebSocket connected');
+
       setIsConnected(true);
       emitSocketEvent('getPort', projectId);
     };
@@ -116,7 +116,7 @@ export default function Page() {
     };
 
     ws.onclose = () => {
-      console.log('🔌 Terminal WebSocket disconnected');
+
       setIsConnected(false);
     };
 

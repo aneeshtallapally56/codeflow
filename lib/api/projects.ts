@@ -10,7 +10,7 @@ type GetProjectTreePayload = {
 export const createProject = async (payload: CreateProjectPayload) => {
 try {
       const res = await axiosInstance.post('api/v1/projects/create-project',payload);
-      console.log(res.data);
+
       return res.data;
 } catch (error) {
       console.error('Error creating project:', error);
@@ -22,7 +22,7 @@ try {
 export const getProjectTree = async ({ projectId }: GetProjectTreePayload) => {
 try {
       const res = await axiosInstance.get(`api/v1/projects/${projectId}/tree`);
-      console.log(res.data);
+
       return res.data?.tree;
 } catch (error) {
       console.error('Error creating project:', error);
@@ -49,7 +49,7 @@ try {
         const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
         const endpoint = `${BASE_URL}/api/v1/projects`;
         const res = await axiosInstance.get(endpoint);
-        console.log("Projects fetched:", res.data);
+
         return res.data.projects;
       } catch (error) {
         console.error("Error fetching projects:", error);
@@ -62,7 +62,7 @@ try {
       const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
       const endpoint = `${BASE_URL}/api/v1/project/${projectId}`;
       const res = await axiosInstance.get(endpoint);
-      console.log("Project fetched:", res.data);
+
       return res.data.project;
     } catch (error) {
       console.error("Error fetching project by ID:", error);
@@ -74,8 +74,8 @@ try {
   try {
      const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
        const endpoint = `${BASE_URL}/api/v1/projects/join`;
-         const res = await axiosInstance.post(endpoint, { projectId });
-    console.log("Project joined:", res.data);
+         await axiosInstance.post(endpoint, { projectId });
+
 
   } catch (error) {
       console.error("Error fetching project by ID:", error);
@@ -87,8 +87,8 @@ export const leaveProject = async (projectId: string) => {
   try {
     const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
     const endpoint = `${BASE_URL}/api/v1/projects/leave`;
-    const res = await axiosInstance.post(endpoint, { projectId });
-    console.log("Project left:", res.data);
+    await axiosInstance.post(endpoint, { projectId });
+
   } catch (error) {
     console.error("Error leaving project:", error);
     throw error;

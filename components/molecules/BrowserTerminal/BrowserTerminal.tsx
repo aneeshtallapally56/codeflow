@@ -45,7 +45,7 @@ export const BrowserTerminal = () => {
 
     // Attach WebSocket if it's ready
     if (terminalSocket && isConnected && terminalSocket.readyState === WebSocket.OPEN) {
-      console.log('✅ Attaching terminal to WebSocket');
+
       terminalSocket.binaryType = 'arraybuffer';
 
       const attachAddon = new AttachAddon(terminalSocket);

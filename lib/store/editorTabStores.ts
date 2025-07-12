@@ -92,7 +92,7 @@ export const useEditorTabStore = create<EditorTabStore>((set, get) => ({
     const remainingTabs = openTabs.filter(tab => tab.path !== path);
     const projectId = useTreeStructureStore.getState().projectId;
     const editorSocket = useEditorSocketStore.getState();
-    const userId = useUserStore.getState().userId;
+    const userId = useUserStore.getState().user?.userId;
 
     if (!projectId) return;
 

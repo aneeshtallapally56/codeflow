@@ -74,7 +74,7 @@ export const useSocketListeners = () => {
     initialized.current = true;
 
     const handleReadFileSuccess = (data: FileReadEvent) => {
-      console.log("✅ readFileSuccess:", data);
+
       const fileTab = {
         path: data.filePath,
         name: path.basename(data.filePath),
@@ -90,28 +90,28 @@ export const useSocketListeners = () => {
     };
 
     const handleWriteFileSuccess = (data: FileWriteEvent) => {
-      console.log("✅ File written:", data);
+
       editorSocket.emit("readFile", { filePath: data.filePath });
     };
 
     const handleFileCreated = (data: FileOperationEvent) => {
-      console.log("🆕 fileCreated:", data.filePath);
+
       setTreeStructure();
     };
 
     const handleFileDeleted = (data: FileOperationEvent) => {
-      console.log("🗑️ fileDeleted:", data.filePath);
+
       setTreeStructure();
       setLock(data.filePath, null);
     };
 
     const handleFolderCreated = (data: FileOperationEvent) => {
-      console.log("📁 folderCreated:", data.filePath);
+
       setTreeStructure();
     };
 
     const handleFolderDeleted = (data: FileOperationEvent) => {
-      console.log("📁 folderDeleted:", data.filePath);
+
       setTreeStructure();
     };
 
@@ -119,12 +119,12 @@ export const useSocketListeners = () => {
     const handleDeleteFolderSuccess = () => setTreeStructure();
 
     const handleFileUnlocked = ({ filePath }: FileUnlock) => {
-      console.log("🔓 File unlocked:", filePath);
+
       setLock(filePath, null);
     };
 
     const handleFileLocked = ({ filePath, userId }: FileLock) => {
-      console.log("🔒 File locked:", filePath, "by", userId);
+
       setLock(filePath, userId);
     };
 
@@ -155,7 +155,7 @@ color: "white",
     };
 
     const handleInitialFileLocks = ({ fileLocks }: { fileLocks: Record<string, string> })=>{
-      console.log("🔒 Initial file locks:", fileLocks);
+
   const { setLock } = useFileLockStore.getState();
   for (const [filePath, userId] of Object.entries(fileLocks)) {
     setLock(filePath, userId);
@@ -166,11 +166,7 @@ color: "white",
       toast.error(`Error: ${data.data}`);
     };
 
-    const handleAnyEvent = (event: string, ...args: any[]) => {
-      if (process.env.NODE_ENV === "development") {
-        console.log("📡 Socket event:", event, args);
-      }
-    };
+  
 
     // Register all socket listeners
     editorSocket.on("readFileSuccess", handleReadFileSuccess);
@@ -187,12 +183,10 @@ color: "white",
     editorSocket.on("initialFileLocks", handleInitialFileLocks);
     editorSocket.on("error", handleError);
 
-    if (process.env.NODE_ENV === "development") {
-      editorSocket.onAny(handleAnyEvent);
-    }
+   
 
     editorSocket.on("getPortSuccess", ({ port }) => {
-      console.log("✅ Port from server:", port);
+
       setPort(port);
     });
 
@@ -211,47 +205,45 @@ color: "white",
       editorSocket.off("fileLockRequested", handleFileLockRequest);
       editorSocket.off("initialFileLocks", handleInitialFileLocks);
       editorSocket.off("error", handleError);
-      if (process.env.NODE_ENV === "development") {
-        editorSocket.offAny(handleAnyEvent);
-      }
+     
     };
-  }, [editorSocket, openFile, setActiveFileTab, setTreeStructure, userId, setPort]);
+  }, [editorSocket, openFile, setActiveFileTab, setTreeStructure, userId, setPort, setLock]);
 
   // ✅ Presence system
   useEffect(() => {
     if (!editorSocket || !userId) return;
 
     const handleUserJoinedProject = (user: UserPresenceEvent) => {
-      console.log("👥 User joined project:", user);
+
       addProjectRoomUser(user);
      
 
     };
 
     const handleUserLeftProject = ({ socketId }: { userId: string; socketId: string }) => {
-      console.log("👥 User left project:", socketId);
+
       removeProjectRoomUser(socketId);
     };
 
     const handleInitialUsers = (users: UserPresenceEvent[]) => {
-      console.log("👥 Initial project users:", users);
+
       users.forEach(addProjectRoomUser);
     };
 
     const handleUserJoinedFile = (user: UserPresenceEvent) => {
       const filePath = user.filePath;
       if (!filePath) return;
-      console.log("👥 User joined file:", user);
+
       addFileRoomUser(filePath, user);
     };
 
     const handleUserLeftFile = ({ filePath, userId }: { filePath: string; userId: string }) => {
-      console.log("👥 User left file:", filePath);
+
       removeFileRoomUser(filePath, userId);
     };
 
     const handleInitialFileUsers = ({ filePath, users }: { filePath: string; users: UserPresenceEvent[] }) => {
-      console.log("👥 Initial file users:", filePath);
+
       setUsersForFile(filePath, users);
     };
 
@@ -271,5 +263,5 @@ color: "white",
       editorSocket.off("userLeftFile", handleUserLeftFile);
       editorSocket.off("initialFileUsers", handleInitialFileUsers);
     };
-  }, [editorSocket, userId, addProjectRoomUser, removeProjectRoomUser, addFileRoomUser, removeFileRoomUser]);
+  }, [editorSocket, userId, addProjectRoomUser, removeProjectRoomUser, addFileRoomUser, removeFileRoomUser, setUsersForFile]);
 };

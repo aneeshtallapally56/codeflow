@@ -23,7 +23,7 @@ interface InputModalProps {
 
 export function JoinModal({ open, onOpenChange }: InputModalProps) {
   const [projectId, setProjectId] = useState("");
- const { joinProjectMutation, isPending , error } = useJoinProject();
+ const { joinProjectMutation, isPending  } = useJoinProject();
 
   const handleJoin = async() => {
     if (!projectId.trim()) return;

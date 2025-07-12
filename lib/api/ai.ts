@@ -4,7 +4,7 @@ export const generateResponse = async ({ prompt, code }: { prompt: string; code:
         const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
         const endpoint = `${BASE_URL}/api/v1/ai/generate`;
         const res = await axiosInstance.post(endpoint,{ prompt, code });
-        console.log("AI response generated:", res.data);
+
         return res.data.content;
     } catch (error) {
         if (error instanceof Error) {
@@ -21,7 +21,7 @@ export const fixCode = async (code: string) => {
     const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
     const endpoint = `${BASE_URL}/api/v1/ai/fix`;
     const res = await axiosInstance.post(endpoint, { code });
-    console.log("AI code fixed:", res.data);
+
     return res.data.content;
   } catch (error) {
      if (error instanceof Error) {

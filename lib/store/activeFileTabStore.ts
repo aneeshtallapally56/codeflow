@@ -16,7 +16,7 @@ export const useActiveFileTabStore = create<State>((set) => ({
   activeFileTab: null,
 
   setActiveFileTab: (tab) => {
-     console.log("🧠 Updating active file tab:", tab);
+
     set({ activeFileTab: tab })},
 
   clearActiveFileTab: () => set({ activeFileTab: null }),
