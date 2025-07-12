@@ -125,9 +125,20 @@ export const InputModal = ({ open, onOpenChange }: InputModalProps) => {
                   </SelectTrigger>
                   <SelectContent className="bg-gradient-to-br from-[#101010] to-[#151515] border border-zinc-600 text-white text-sm  ">
                     <SelectItem value="React">React</SelectItem>
-                    <SelectItem value="Nextjs">Nextjs</SelectItem>
-                    <SelectItem value="Angular">Angular</SelectItem>
-                    <SelectItem value="Vue">Vue</SelectItem>
+                     <SelectItem value="Vue">Vue</SelectItem>
+                    <SelectItem disabled value="NextJs" >
+                   <div className="w-[230px] flex justify-between items-center">
+    <span>Nextjs</span>
+    <span className="text-muted-foreground text-xs ">coming soon...</span>
+  </div></SelectItem>
+                    <SelectItem disabled   value="Angular" >
+                    
+  <div className="w-[230px] flex justify-between items-center">
+    <span>Angular</span>
+    <span className="text-muted-foreground text-xs ">coming soon...</span>
+  </div>
+</SelectItem>
+                   
                   </SelectContent>
                 </Select>
               </FormControl>

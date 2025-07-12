@@ -10,7 +10,14 @@ import {
   ChevronRight,
   LogOut,
   LoaderCircle,
+
+  DownloadCloudIcon,
 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 import { useProjectById } from "@/hooks/api/queries/useProjectById";
 import { useParams } from "next/navigation";
@@ -57,7 +64,10 @@ finally{
 function handleGenerateOpen(){
 setIsGenerateOpen((prev) => !prev);
 }
-
+function handleDownload(){
+   const url = project?.downloadUrl;
+  window.open(url, '_blank');
+}
 const handleFixCode = async()=>{
 try {
   const code = activeFileTab?.value ?? "";
@@ -99,6 +109,16 @@ try {
             <button className="text-zinc-400 px-4 py-2 rounded border border-zinc-800 capitalize cursor-not-allowed">
               {project.type}
             </button>
+             <Tooltip delayDuration={100} >
+              <TooltipTrigger asChild>
+               <button onClick={handleDownload} className=" text-zinc-400 px-4 py-2  rounded-full border border-zinc-800  hover:text-zinc-400 text-base transition-all ease-out duration-300  hover:border-zinc-400  ">
+              <DownloadCloudIcon className="w-4 h-4 " />
+            </button>
+            </TooltipTrigger>
+              <TooltipContent side="right">
+    <p className="text-zinc-500">Download Project</p>
+  </TooltipContent>
+            </Tooltip>
           </div>
         </div>
     

@@ -24,7 +24,7 @@ type EditorTabStore = {
 
 const extractProjectId = (fullPath: string) => {
   const segments = fullPath.split('/');
-  const index = segments.indexOf('generated-projects');
+  const index = segments.indexOf('tmp');
   return index !== -1 && segments[index + 1] ? segments[index + 1] : '';
 };
 

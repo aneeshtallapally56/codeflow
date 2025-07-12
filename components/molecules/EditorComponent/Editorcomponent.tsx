@@ -49,7 +49,7 @@ const lockHolderName = lockHolder?.username || "Someone";
   // 🧠 Extract project ID from full path
   function extractProjectId(fullPath: string) {
     const segments = fullPath.split("/");
-    const index = segments.indexOf("generated-projects");
+    const index = segments.indexOf("tmp");
     return index !== -1 && segments[index + 1] ? segments[index + 1] : "";
   }
 
@@ -115,6 +115,7 @@ const lockHolderName = lockHolder?.username || "Someone";
       ".html": "html",
       ".css": "css",
       ".json": "json",
+      ".vue":"vue",
       ".md": "markdown",
     };
     return languageMap[extension] || "plaintext";
