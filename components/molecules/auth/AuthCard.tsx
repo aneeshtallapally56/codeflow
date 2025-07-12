@@ -63,6 +63,9 @@ if (!user?._id) {
   avatarUrl: user.avatarUrl,
 });
 
+      console.log("Login successful, user set:", user);
+      console.log("Cookies after login:", document.cookie);
+      
       router.push("/projects");
        toast("  Signed in successfully!",{
    className:"toast",
