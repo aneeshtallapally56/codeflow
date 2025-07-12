@@ -8,6 +8,7 @@ import { useUserStore } from "@/lib/store/userStore";
 import { useEditorTabStore } from "@/lib/store/editorTabStores";
 import { useFileLockStore } from "@/lib/store/fileLockStore";
 import { useFileRoomMembersStore } from "@/lib/store/fileRoomMemberStore";
+import { useTreeStructureStore } from "@/lib/store/treeStructureStore";
 
 
 declare global {
@@ -27,7 +28,7 @@ export default function EditorComponent() {
   const currentFilePathRef = useRef<string>("");
 
   const currentFilePath = activeFileTab?.path || "";
-  const projectId = extractProjectId(currentFilePath);
+  const projectId = useTreeStructureStore((s) => s.projectId);
 
 const currentLock = lockedBy[currentFilePath]; // ✅ First: safely define it
 const isLockedByOther = currentLock && currentLock !== userId;
@@ -46,12 +47,8 @@ const lockHolderName = lockHolder?.username || "Someone";
 
 
 
-  // 🧠 Extract project ID from full path
-  function extractProjectId(fullPath: string) {
-    const segments = fullPath.split("/");
-    const index = segments.indexOf("tmp");
-    return index !== -1 && segments[index + 1] ? segments[index + 1] : "";
-  }
+
+ 
 
   // 📝 Handle user typing in editor
   function handleChange(value: string | undefined) {

@@ -48,7 +48,7 @@ export const InputModalBody = ({
             <DialogClose asChild>
               <Button variant="outline">Cancel</Button>
             </DialogClose>
-            <Button className="bg-white text-black " type="submit" onClick={handleSubmit}>Create</Button>
+            <Button className="bg-gradient-to-b from-blue-500 to-blue-600 text-white font-bold opacity-90 hover:opacity-100 rounded-lg  hover:text-inherit" type="submit" onClick={handleSubmit}>Create</Button>
           </DialogFooter>
     </>
   );

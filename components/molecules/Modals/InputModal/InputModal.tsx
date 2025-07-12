@@ -69,7 +69,7 @@ export const InputModal = ({ open, onOpenChange }: InputModalProps) => {
       toast("  Project cant be created!",{
   className:"toast",
   unstyled: true,
-  icon: <XCircle className="text-green-500 w-5 h-5" />,
+  icon: <XCircle className="text-red-500 w-5 h-5" />,
 });
     }
   };

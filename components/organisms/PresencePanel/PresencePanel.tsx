@@ -1,6 +1,6 @@
 "use client";
 
-import { PlusCircleIcon } from "lucide-react";
+import { Copy, CopyCheck, PlusCircleIcon } from "lucide-react";
 
 import { useProjectRoomMembersStore } from "@/lib/store/projectRoomMemberStore";
 import { useUserStore } from "@/lib/store/userStore";
@@ -10,6 +10,8 @@ import { useEditorSocketStore } from "@/lib/store/editorSocketStore";
 import Image from "next/image";
 import { useMemo } from "react";
 import { useFileRoomUsers } from "@/lib/utils/useFileRoomUsers";
+import { toast } from "sonner";
+import { useTreeStructureStore } from "@/lib/store/treeStructureStore";
 
 export default function CollaboratorPanel() {
   const lockedBy = useFileLockStore((state) => state.lockedBy);
@@ -23,14 +25,28 @@ export default function CollaboratorPanel() {
   const currentUserId = useUserStore((state) => state.user?.userId);
   const defaultAvatarUrl = "https://api.dicebear.com/9.x/bottts-neutral/png?seed=Felix";
 
-  const extractProjectId = (fullPath: string) => {
-    const segments = fullPath.split("/");
-    const index = segments.indexOf("tmp");
-    return index !== -1 && segments[index + 1] ? segments[index + 1] : "";
+  
+
+   const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(projectId);
+      toast("Copied Project ID!", {
+        icon: <CopyCheck className="text-green-500 w-5 h-5" />,
+        className: "toast",
+        unstyled: true,
+      });
+    } catch (err) {
+      toast("Failed to copy", {
+        description: "Please try again",
+        className: "toast",
+        unstyled: true,
+      });
+    }
   };
+
   console.log("projectroommembers", projectRoomUsers);
 
-  const projectId = useMemo(() => extractProjectId(currentFilePath), [currentFilePath]);
+  const projectId = useTreeStructureStore((state) => state.projectId);
 
   // Get who has the lock on the current file
   
@@ -44,10 +60,11 @@ export default function CollaboratorPanel() {
       <div className="flex justify-between items-center border-b border-zinc-700 pb-2 mb-2">
         <h2 className="text-lg font-semibold">People</h2>
         <button
+         onClick={handleCopy}
           type="button"
           className="flex items-center gap-1 text-zinc-400 text-sm px-3 py-1 border border-zinc-700 rounded-md hover:bg-zinc-800 transition"
         >
-          Add <PlusCircleIcon className="w-5 h-5" />
+          <Copy className="h-5 w-5 inline-block mr-1" />
         </button>
       </div>
 

@@ -146,15 +146,10 @@ try {
           </Button>
 
           <div className="flex">
-            <Button  onClick={handlePreview}  className="bg-gradient-to-b from-blue-500 to-blue-600 text-white font-bold opacity-90 hover:opacity-100 rounded-l-lg rounded-r-none hover:text-inherit">
+            <Button  onClick={handlePreview}  className="bg-gradient-to-b from-blue-500 to-blue-600 text-white font-bold opacity-90 hover:opacity-100 rounded-lg  hover:text-inherit">
               Preview
             </Button>
-            <Button
-              variant="outline"
-              className="border-blue-500 text-blue-500 hover:bg-blue-950 opacity-70 hover:opacity-100 rounded-l-none px-2  hover:text-blue-500"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </Button>
+           
           </div>
         </div>
       </div>

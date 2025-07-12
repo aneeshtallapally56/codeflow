@@ -18,6 +18,8 @@ import { Label } from "@/components/ui/label";
 import Link from "next/link";
 
 import { useUserStore } from "@/lib/store/userStore";
+import { toast } from "sonner";
+import { CheckCircle, XCircle } from "lucide-react";
 interface AuthCardProps {
   type: "login" | "signup";
 }
@@ -62,10 +64,25 @@ if (!user?._id) {
 });
 
       router.push("/projects");
+       toast("  Signed in successfully!",{
+   className:"toast",
+    unstyled: true,
+  icon: <CheckCircle className="text-green-500 w-5 h-5" />,
+});
     } catch (err: any) {
       const message =
         err.response?.data?.message || err.message || "Authentication failed";
-      alert(message);
+       toast(` ${message} `,{
+        
+        style:{
+          backgroundColor: "#171717",
+          color: "#fff",
+          border: "1px solid #3A3937",
+          
+        },
+ 
+  icon: <XCircle className="text-red-500 w-5 h-5" />,
+});
     } finally {
       setLoading(false);
     }
@@ -85,11 +102,11 @@ if (!user?._id) {
         <CardAction>
           {isSignup ? (
             <Link href="/login">
-              <Button variant="link">Sign In</Button>
+              <Button className="text-zinc-400" variant="link">Sign In</Button>
             </Link>
           ) : (
             <Link href="/signup">
-              <Button variant="link">Sign Up</Button>
+              <Button className="text-zinc-400" variant="link">Sign Up</Button>
             </Link>
           )}
         </CardAction>
@@ -107,7 +124,7 @@ if (!user?._id) {
                   value={name}
                   className="bg-[#212121] border-0 "
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="John Doe"
+                  placeholder="Aneesh Tallapally"
                   required
                 />
               </div>
@@ -120,7 +137,7 @@ if (!user?._id) {
                 value={email}
                 className="bg-[#212121] border-0"
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="m@example.com"
+                placeholder="at@gmail.com"
                 required
               />
             </div>
@@ -158,17 +175,12 @@ if (!user?._id) {
         <CardFooter className="flex-col gap-2 mt-6 mb-4">
           <Button
             type="submit"
-            className="w-full text-black"
+            className="w-full bg-zinc-300 text-black  hover:bg-zinc-200 transition-colors duration-200 cursor-pointer"
             disabled={loading}
           >
             {loading ? "Please wait..." : isSignup ? "Sign Up" : "Login"}
           </Button>
-          <Button
-            variant="outline"
-            className="w-full bg-[#212121] hover:bg-blue-200 transition-colors"
-          >
-            Login with Google
-          </Button>
+        
         </CardFooter>
       </form>
     </Card>

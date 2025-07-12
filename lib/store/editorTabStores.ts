@@ -22,11 +22,7 @@ type EditorTabStore = {
   updateFileContent: (path: string, content: string) => void;
 };
 
-const extractProjectId = (fullPath: string) => {
-  const segments = fullPath.split('/');
-  const index = segments.indexOf('tmp');
-  return index !== -1 && segments[index + 1] ? segments[index + 1] : '';
-};
+
 
 export const useEditorTabStore = create<EditorTabStore>((set, get) => ({
   openTabs: [],
