@@ -5,7 +5,7 @@ import { FullPageSpinner } from "@/components/ui/fullPageLoader";
 
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import axiosInstance from "@/lib/config/axios-config";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 
