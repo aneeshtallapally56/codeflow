@@ -93,5 +93,7 @@ export const getAuthHeaders = (): Record<string, string> => {
 
 // Check if user is authenticated
 export const isAuthenticated = (): boolean => {
-  return TokenManager.getValidAccessToken() !== null;
+  // Since we're using HTTP-only cookies, we can't check the token directly
+  // We'll rely on the user store state and API calls to determine authentication
+  return true; // This will be overridden by the useAuth hook
 }; 

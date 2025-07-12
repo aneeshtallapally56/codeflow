@@ -18,7 +18,6 @@ import { Label } from "@/components/ui/label";
 import Link from "next/link";
 
 import { useUserStore } from "@/lib/store/userStore";
-import { TokenManager } from "@/lib/utils/auth";
 import { toast } from "sonner";
 import { CheckCircle, XCircle } from "lucide-react";
 interface AuthCardProps {
@@ -52,17 +51,14 @@ export function AuthCard({ type }: AuthCardProps) {
         withCredentials: true,
       });
    const user = res.data?.data?.user;
-   const tokens = res.data?.data?.tokens;
 
 if (!user?._id) {
   alert("Login/Signup succeeded, but no user returned.");
   return;
 }
 
-      // Store tokens if provided
-      if (tokens?.accessToken) {
-        TokenManager.setTokens(tokens.accessToken, tokens.refreshToken);
-      }
+      // Note: Token is stored as HTTP-only cookie by the backend
+      // No need to store in localStorage for security
 
       useUserStore.getState().setUser({
   userId: user._id,
@@ -72,10 +68,11 @@ if (!user?._id) {
 });
 
       console.log("Login successful, user set:", user);
-      console.log("Tokens stored:", !!tokens?.accessToken);
+      console.log("Cookie-based authentication active");
       
+      console.log("About to navigate to /projects");
       router.push("/projects");
-       toast("  Signed in successfully!",{
+      toast("  Signed in successfully!",{
    className:"toast",
     unstyled: true,
   icon: <CheckCircle className="text-green-500 w-5 h-5" />,

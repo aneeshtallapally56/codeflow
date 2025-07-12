@@ -1,33 +1,34 @@
 import { useEffect, useState } from 'react';
-import { TokenManager, isAuthenticated } from '@/lib/utils/auth';
+import { TokenManager } from '@/lib/utils/auth';
 import { useUserStore } from '@/lib/store/userStore';
 import { logout } from '@/lib/api/logout';
+import { getCurrentUser } from '@/lib/api/getCurrentUser';
 
 export const useAuth = () => {
   const [isLoading, setIsLoading] = useState(true);
   const { user, setUser, clearUser } = useUserStore();
 
   useEffect(() => {
-    const checkAuth = () => {
-      const token = TokenManager.getValidAccessToken();
-      
-      if (token) {
-        const userInfo = TokenManager.getUserFromToken(token);
-        if (userInfo && !user) {
-          // Set user from token if not already set
+    const checkAuth = async () => {
+      try {
+        // Try to get current user from API (this will use cookies)
+        const userData = await getCurrentUser();
+        if (userData && !user) {
           setUser({
-            userId: userInfo.userId,
-            email: userInfo.email,
+            userId: userData._id,
+            username: userData.username,
+            email: userData.email,
+            avatarUrl: userData.avatarUrl,
           });
         }
-      } else {
-        // Clear user if no valid token
+      } catch (error) {
+        // If API call fails, user is not authenticated
         if (user) {
           clearUser();
         }
+      } finally {
+        setIsLoading(false);
       }
-      
-      setIsLoading(false);
     };
 
     checkAuth();
@@ -48,7 +49,7 @@ export const useAuth = () => {
 
   return {
     user,
-    isAuthenticated: isAuthenticated(),
+    isAuthenticated: !!user,
     isLoading,
     logout,
   };
