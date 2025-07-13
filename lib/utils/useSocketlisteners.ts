@@ -86,9 +86,9 @@ export const useSocketListeners = () => {
       });
     };
 
-    const handleWriteFileSuccess = () => {
+    const handleWriteFileSuccess = ({ filePath }: { filePath: string }) => {
 
-      editorSocket.emit("readFile", { filePath: "" });
+      editorSocket.emit("readFile", { filePath });
     };
 
     const handleFileCreated = () => {
